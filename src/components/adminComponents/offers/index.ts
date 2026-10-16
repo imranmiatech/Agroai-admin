@@ -1,0 +1,1 @@
+export { AdminOffersTable } from './AdminOffersTable';

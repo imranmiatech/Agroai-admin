@@ -1,0 +1,1 @@
+export { VendorOffersTable } from './VendorOffersTable';
