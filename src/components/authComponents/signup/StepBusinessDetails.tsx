@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, EyeOff, ArrowRight, Upload, Check, ChevronDown, X } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Upload, Check, X, Loader2 } from 'lucide-react';
 import { SignUpProgressBar } from './SignUpProgressBar';
 
 interface StepBusinessDetailsProps {
@@ -10,13 +10,8 @@ interface StepBusinessDetailsProps {
   logoPreview: string | null;
   businessName: string;
   setBusinessName: (val: string) => void;
-  businessCategory: string;
-  setBusinessCategory: (val: string) => void;
-  categories: string[];
   shortDescription: string;
   setShortDescription: (val: string) => void;
-  website: string;
-  setWebsite: (val: string) => void;
   email: string;
   setEmail: (val: string) => void;
   phoneNumber: string;
@@ -29,9 +24,8 @@ interface StepBusinessDetailsProps {
   setShowPassword: (val: boolean) => void;
   showConfirmPassword: boolean;
   setShowConfirmPassword: (val: boolean) => void;
-  otpOption: 'email' | 'phone';
-  setOtpOption: (val: 'email' | 'phone') => void;
   errorMsg: string;
+  isSubmitting?: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onNavigateLogin: () => void;
 }
@@ -44,13 +38,8 @@ export const StepBusinessDetails: React.FC<StepBusinessDetailsProps> = ({
   logoPreview,
   businessName,
   setBusinessName,
-  businessCategory,
-  setBusinessCategory,
-  categories,
   shortDescription,
   setShortDescription,
-  website,
-  setWebsite,
   email,
   setEmail,
   phoneNumber,
@@ -63,61 +52,56 @@ export const StepBusinessDetails: React.FC<StepBusinessDetailsProps> = ({
   setShowPassword,
   showConfirmPassword,
   setShowConfirmPassword,
-  otpOption,
-  setOtpOption,
   errorMsg,
+  isSubmitting = false,
   onSubmit,
   onNavigateLogin,
 }) => {
   return (
-    <div className="w-full max-w-[620px] flex flex-col items-center">
-      {/* Header */}
+    <div className="w-full max-w-[540px] flex flex-col items-center">
+      {/* Step Indicator Header */}
       <div className="text-center mb-6">
-        <h1 className="text-[24px] sm:text-[28px] font-semibold text-[#1F2A37]">
-          Welcome to Krisikunjo Partners
+        <h1 className="text-[28px] sm:text-[30px] font-bold text-[#00373E]">
+          Business Details
         </h1>
-        <p className="text-[14px] sm:text-[15px] text-[#4B5563] mt-1">
-          Let's set up your business before you get started.
+        <p className="text-[15px] sm:text-[16px] font-medium text-[#4B5563] mt-1">
+          Provide your core business information
         </p>
       </div>
 
-      {/* Stepper */}
+      {/* Progress Bar (Step 1 of 4) */}
       <SignUpProgressBar currentStep={1} />
 
-      {/* Card Form */}
+      {/* Form Container */}
       <div className="w-full bg-white border border-[#E7EEEE] rounded-[16px] p-6 sm:p-8 shadow-[0px_4px_24px_rgba(0,0,0,0.06)]">
-        <h2 className="text-[16px] font-medium text-[#1F2A37] mb-6">
-          Step 1 — Business Details
-        </h2>
-
         {errorMsg && (
           <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-[12px] text-red-600 text-xs font-medium">
             {errorMsg}
           </div>
         )}
 
-        <form onSubmit={onSubmit} className="space-y-5">
+        <form onSubmit={onSubmit} className="space-y-4">
           {/* Logo Upload Box */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png, image/jpeg, image/webp"
+            className="hidden"
+            onChange={handleLogoChange}
+          />
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="w-full border-2 border-dashed border-[#CBD5E1] hover:border-[#0B5460] rounded-[16px] p-6 flex flex-col items-center justify-center cursor-pointer transition-colors bg-[#F8FAFC]/50 hover:bg-[#F8FAFC] group relative"
+            className="w-full border border-dashed border-[#CCD6D6] hover:border-[#0B5460] bg-[#FAFCFC] hover:bg-[#F2F7F7] rounded-[14px] p-4 flex flex-col items-center justify-center cursor-pointer transition-colors group relative"
           >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleLogoChange}
-              accept="image/png, image/jpeg, image/jpg"
-              className="hidden"
-            />
             {logoPreview ? (
-              <div className="flex items-center gap-4 w-full justify-between">
+              <div className="flex items-center justify-between w-full px-2">
                 <div className="flex items-center gap-3">
                   <img
                     src={logoPreview}
-                    alt="Logo Preview"
-                    className="w-14 h-14 object-cover rounded-[12px] border border-gray-200 shadow-xs"
+                    alt="Logo preview"
+                    className="w-12 h-12 rounded-full object-cover border border-gray-200"
                   />
-                  <div>
+                  <div className="text-left">
                     <p className="text-[14px] font-medium text-[#1F2A37]">
                       {logoFile?.name || 'Uploaded logo'}
                     </p>
@@ -166,30 +150,6 @@ export const StepBusinessDetails: React.FC<StepBusinessDetailsProps> = ({
             </div>
           </div>
 
-          {/* Business Category */}
-          <div>
-            <label className="block text-[14px] font-medium text-[#20293A] mb-1.5">
-              Business Category <span className="text-[#EF4444]">*</span>
-            </label>
-            <div className="relative w-full h-[42px] bg-[#F8FAFC] border border-[#EEF2F6] rounded-[14px] flex items-center px-3.5 focus-within:border-[#0B5460] focus-within:ring-2 focus-within:ring-[#0B5460]/10 transition-all">
-              <select
-                value={businessCategory}
-                onChange={(e) => setBusinessCategory(e.target.value)}
-                className={`w-full bg-transparent text-[14px] outline-none appearance-none cursor-pointer pr-6 ${
-                  businessCategory ? 'text-[#0F172A]' : 'text-[#94A3B8]'
-                }`}
-              >
-                <option value="" disabled>Select a category</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat} className="text-[#0F172A]">
-                    {cat}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-[#64748B] pointer-events-none absolute right-3.5" />
-            </div>
-          </div>
-
           {/* Short Description */}
           <div>
             <label className="block text-[14px] font-medium text-[#20293A] mb-1.5">
@@ -202,22 +162,6 @@ export const StepBusinessDetails: React.FC<StepBusinessDetailsProps> = ({
                 onChange={(e) => setShortDescription(e.target.value)}
                 placeholder="Briefly describe your business and what you offer..."
                 className="w-full bg-transparent text-[14px] text-[#0F172A] placeholder:text-[#94A3B8] outline-none resize-none"
-              />
-            </div>
-          </div>
-
-          {/* Website */}
-          <div>
-            <label className="block text-[14px] font-medium text-[#20293A] mb-1.5">
-              Website
-            </label>
-            <div className="w-full h-[42px] px-3.5 bg-[#F8FAFC] border border-[#EEF2F6] rounded-[14px] flex items-center focus-within:border-[#0B5460] focus-within:ring-2 focus-within:ring-[#0B5460]/10 transition-all">
-              <input
-                type="url"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://yourwebsite.com"
-                className="w-full bg-transparent text-[14px] text-[#0F172A] placeholder:text-[#94A3B8] outline-none"
               />
             </div>
           </div>
@@ -302,43 +246,24 @@ export const StepBusinessDetails: React.FC<StepBusinessDetailsProps> = ({
             </div>
           </div>
 
-          {/* OTP Options Radio */}
-          <div className="pt-2">
-            <label className="block text-[15px] font-medium text-[#1F2A37] mb-2.5">
-              Select OTP options <span className="text-[#EF4444]">*</span>
-            </label>
-            <div className="flex items-center gap-6">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="radio"
-                  name="otpOption"
-                  checked={otpOption === 'email'}
-                  onChange={() => setOtpOption('email')}
-                  className="w-4 h-4 text-[#0B5460] focus:ring-[#0B5460] accent-[#0B5460] cursor-pointer"
-                />
-                <span className="text-[14px] font-medium text-[#20293A]">E-mail</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="radio"
-                  name="otpOption"
-                  checked={otpOption === 'phone'}
-                  onChange={() => setOtpOption('phone')}
-                  className="w-4 h-4 text-[#0B5460] focus:ring-[#0B5460] accent-[#0B5460] cursor-pointer"
-                />
-                <span className="text-[14px] font-medium text-[#20293A]">Phone</span>
-              </label>
-            </div>
-          </div>
-
           {/* Divider */}
           <div className="border-t border-[#EEF2F6] pt-4 flex justify-end">
             <button
               type="submit"
-              className="bg-[#0B5460] hover:bg-[#08424C] text-white px-7 py-2.5 rounded-[16px] font-semibold text-[13.5px] transition-all flex items-center gap-1.5 shadow-sm active:scale-[0.99] cursor-pointer"
+              disabled={isSubmitting}
+              className="bg-[#0B5460] hover:bg-[#08424C] disabled:opacity-50 text-white px-7 py-2.5 rounded-[16px] font-semibold text-[13.5px] transition-all flex items-center gap-1.5 shadow-sm active:scale-[0.99] cursor-pointer"
             >
-              <span>Continue</span>
-              <ArrowRight className="w-4 h-4" />
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Sending code...</span>
+                </>
+              ) : (
+                <>
+                  <span>Continue</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         </form>

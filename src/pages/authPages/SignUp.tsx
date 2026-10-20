@@ -7,9 +7,19 @@ import {
   StepContactInformation,
   SignUpSuccessView,
 } from '../../components/authComponents/signup';
+import {
+  useSendOtpMutation,
+  useVerifyOtpMutation,
+  useRegisterVendorMutation,
+} from '../../redux/feature/auth/authApi';
 
 export const SignUp: React.FC = () => {
   const navigate = useNavigate();
+
+  // RTK Query Mutations
+  const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
+  const [verifyOtp, { isLoading: isVerifyingOtp }] = useVerifyOtpMutation();
+  const [registerVendor, { isLoading: isRegisteringVendor }] = useRegisterVendorMutation();
 
   // Wizard Steps:
   // 1: Business Details
@@ -23,16 +33,13 @@ export const SignUp: React.FC = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState('');
-  const [businessCategory, setBusinessCategory] = useState('');
   const [shortDescription, setShortDescription] = useState('');
-  const [website, setWebsite] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [otpOption, setOtpOption] = useState<'email' | 'phone'>('email');
 
   // Step 2: OTP Verification State
   const [otpValue, setOtpValue] = useState('');
@@ -40,7 +47,7 @@ export const SignUp: React.FC = () => {
   const [canResend, setCanResend] = useState(false);
 
   // Step 3: Business Location State
-  const [country, setCountry] = useState('United Arab Emirates');
+  const [country, setCountry] = useState('Bangladesh');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [openingHours, setOpeningHours] = useState('Mon–Fri 9:00–18:00');
@@ -53,8 +60,24 @@ export const SignUp: React.FC = () => {
 
   // UI state
   const [errorMsg, setErrorMsg] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper to extract clean error message
+  const extractErrorMessage = (err: any, defaultMsg: string): string => {
+    if (err?.data?.message) {
+      if (Array.isArray(err.data.message)) {
+        return err.data.message.join(', ');
+      }
+      return String(err.data.message);
+    }
+    if (err?.error) {
+      return String(err.error);
+    }
+    if (err?.message) {
+      return String(err.message);
+    }
+    return defaultMsg;
+  };
 
   // Timer for OTP resend countdown
   useEffect(() => {
@@ -88,17 +111,13 @@ export const SignUp: React.FC = () => {
     }
   };
 
-  // Validation & Navigation
-  const handleStep1Submit = (e: React.FormEvent) => {
+  // Step 1: Submit & Send OTP to business email
+  const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
     if (!businessName.trim()) {
       setErrorMsg('Please enter your business name.');
-      return;
-    }
-    if (!businessCategory.trim()) {
-      setErrorMsg('Please select a business category.');
       return;
     }
     if (!email.trim()) {
@@ -118,26 +137,67 @@ export const SignUp: React.FC = () => {
       return;
     }
 
-    // Move to step 2 (OTP)
-    setResendTimer(45);
-    setCanResend(false);
-    setOtpValue('');
-    setCurrentStep(2);
+    try {
+      const res = await sendOtp({ email: email.trim().toLowerCase() }).unwrap();
+      if (res?.data?.debugOtp) {
+        console.info(`[Dev OTP Code]: ${res.data.debugOtp}`);
+      }
+      setResendTimer(res?.data?.expiresInSeconds || 45);
+      setCanResend(false);
+      setOtpValue('');
+      setCurrentStep(2);
+    } catch (err: any) {
+      setErrorMsg(extractErrorMessage(err, 'Failed to send OTP verification code. Please check your email.'));
+    }
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  // Step 2: Verify OTP
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!otpValue || otpValue.length < 4) {
-      setErrorMsg('Please enter a valid verification code.');
+    if (!otpValue || otpValue.trim().length < 6) {
+      setErrorMsg('Please enter the complete 6-digit verification code.');
       return;
     }
 
-    // Move to step 3 (Business Location)
-    setCurrentStep(3);
+    try {
+      await verifyOtp({
+        email: email.trim().toLowerCase(),
+        otpCode: otpValue.trim(),
+      }).unwrap();
+
+      // Automatically prefill contact email if not set
+      if (!contactEmail) {
+        setContactEmail(email.trim());
+      }
+      if (!contactPhone && phoneNumber) {
+        setContactPhone(phoneNumber.trim());
+      }
+
+      // Move to step 3 (Business Location)
+      setCurrentStep(3);
+    } catch (err: any) {
+      setErrorMsg(extractErrorMessage(err, 'Invalid or expired OTP code. Please try again.'));
+    }
   };
 
+  // Step 2: Resend Code
+  const handleResendCode = async () => {
+    setErrorMsg('');
+    try {
+      const res = await sendOtp({ email: email.trim().toLowerCase() }).unwrap();
+      if (res?.data?.debugOtp) {
+        console.info(`[Dev OTP Code]: ${res.data.debugOtp}`);
+      }
+      setResendTimer(res?.data?.expiresInSeconds || 45);
+      setCanResend(false);
+    } catch (err: any) {
+      setErrorMsg(extractErrorMessage(err, 'Failed to resend code. Please wait a moment and try again.'));
+    }
+  };
+
+  // Step 3: Location Details
   const handleStep2LocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -155,7 +215,8 @@ export const SignUp: React.FC = () => {
     setCurrentStep(4);
   };
 
-  const handleStep3ContactSubmit = (e: React.FormEvent) => {
+  // Step 4: Submit complete partner application with multipart/form-data
+  const handleStep3ContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -172,26 +233,45 @@ export const SignUp: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    // Simulate API registration call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const formData = new FormData();
+      formData.append('businessName', businessName.trim());
+      if (shortDescription.trim()) {
+        formData.append('shortDescription', shortDescription.trim());
+      }
+      formData.append('email', email.trim().toLowerCase());
+      if (phoneNumber.trim()) {
+        formData.append('phoneNumber', phoneNumber.trim());
+      }
+      formData.append('password', password);
+      formData.append('country', country.trim());
+      formData.append('city', city.trim());
+      if (address.trim()) {
+        formData.append('address', address.trim());
+      }
+      if (openingHours.trim()) {
+        formData.append('openingHours', openingHours.trim());
+      }
+      formData.append('contactPerson', contactPerson.trim());
+      if (contactRole.trim()) {
+        formData.append('contactRole', contactRole.trim());
+      }
+      formData.append('contactEmail', contactEmail.trim().toLowerCase());
+      formData.append('contactPhone', contactPhone.trim());
+
+      if (logoFile) {
+        formData.append('logo', logoFile);
+      }
+
+      await registerVendor(formData).unwrap();
       setCurrentStep(5);
-    }, 700);
+    } catch (err: any) {
+      setErrorMsg(extractErrorMessage(err, 'Failed to submit partner application. Please verify your details.'));
+    }
   };
 
-  const categories = [
-    'Grocery & Supermarket',
-    'Electronics & Technology',
-    'Fashion & Apparel',
-    'Health & Beauty',
-    'Restaurants & Dining',
-    'Home & Lifestyle',
-    'Sports & Fitness',
-    'Other'
-  ];
-
   const countries = [
+    'Bangladesh',
     'United Arab Emirates',
     'Saudi Arabia',
     'Qatar',
@@ -202,7 +282,6 @@ export const SignUp: React.FC = () => {
     'United States',
     'Canada',
     'Germany',
-    'France',
     'Other'
   ];
 
@@ -219,13 +298,8 @@ export const SignUp: React.FC = () => {
             logoPreview={logoPreview}
             businessName={businessName}
             setBusinessName={setBusinessName}
-            businessCategory={businessCategory}
-            setBusinessCategory={setBusinessCategory}
-            categories={categories}
             shortDescription={shortDescription}
             setShortDescription={setShortDescription}
-            website={website}
-            setWebsite={setWebsite}
             email={email}
             setEmail={setEmail}
             phoneNumber={phoneNumber}
@@ -238,30 +312,24 @@ export const SignUp: React.FC = () => {
             setShowPassword={setShowPassword}
             showConfirmPassword={showConfirmPassword}
             setShowConfirmPassword={setShowConfirmPassword}
-            otpOption={otpOption}
-            setOtpOption={setOtpOption}
             errorMsg={errorMsg}
+            isSubmitting={isSendingOtp}
             onSubmit={handleStep1Submit}
             onNavigateLogin={() => navigate('/login')}
           />
         )}
 
-        {/* Step 2: Verify Code (OTP) */}
+        {/* Step 2: Verify Code (Email OTP) */}
         {currentStep === 2 && (
           <StepOtpVerification
-            otpOption={otpOption}
-            phoneNumber={phoneNumber}
             email={email}
             otpValue={otpValue}
             setOtpValue={setOtpValue}
             canResend={canResend}
             resendTimer={resendTimer}
-            onResendCode={() => {
-              setResendTimer(45);
-              setCanResend(false);
-              setErrorMsg('');
-            }}
+            onResendCode={handleResendCode}
             errorMsg={errorMsg}
+            isVerifying={isVerifyingOtp}
             onBack={() => {
               setErrorMsg('');
               setCurrentStep(1);
@@ -303,10 +371,9 @@ export const SignUp: React.FC = () => {
             contactPhone={contactPhone}
             setContactPhone={setContactPhone}
             businessName={businessName}
-            businessCategory={businessCategory}
             city={city}
             country={country}
-            isSubmitting={isSubmitting}
+            isSubmitting={isRegisteringVendor}
             errorMsg={errorMsg}
             onBack={() => {
               setErrorMsg('');

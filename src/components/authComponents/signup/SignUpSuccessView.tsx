@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import partnerSubmittedBadge from '../../../assets/partner-submitted-badge.svg';
 
 interface SignUpSuccessViewProps {
@@ -8,7 +8,7 @@ interface SignUpSuccessViewProps {
 export const SignUpSuccessView: React.FC<SignUpSuccessViewProps> = ({ onBackToWebsite }) => {
   return (
     <div className="w-full max-w-[688px] flex flex-col items-center text-center py-10 px-4 animate-in fade-in zoom-in-95 duration-300">
-      {/* SVG Badge with sparkles from Figma Node 25762:61856 */}
+      {/* SVG Badge with sparkles */}
       <div className="mb-6 flex items-center justify-center">
         <img
           src={partnerSubmittedBadge}
@@ -24,7 +24,7 @@ export const SignUpSuccessView: React.FC<SignUpSuccessViewProps> = ({ onBackToWe
 
       {/* Description */}
       <p className="text-[15px] sm:text-[16px] text-[#4B5563] mt-3.5 max-w-[560px] leading-relaxed">
-        Our team will review your request and get in touch with you shortly. Please allow 3–5 business days for the review process.
+        Our administrative team will review your application and activate your vendor store. You will receive an email update once your account has been reviewed.
       </p>
 
       {/* Back to Website Button */}
@@ -34,7 +34,7 @@ export const SignUpSuccessView: React.FC<SignUpSuccessViewProps> = ({ onBackToWe
           onClick={onBackToWebsite}
           className="bg-[#0B5460] hover:bg-[#08424C] text-white px-7 py-2.5 rounded-[16px] font-semibold text-[13.5px] transition-all shadow-sm active:scale-[0.99] cursor-pointer"
         >
-          Back to website
+          Proceed to Login
         </button>
       </div>
     </div>

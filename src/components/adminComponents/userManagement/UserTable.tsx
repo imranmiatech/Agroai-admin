@@ -1,9 +1,15 @@
 import React from 'react';
-import { Eye, Ban, CheckCircle2, Trash2 } from 'lucide-react';
+import { Eye, Ban, CheckCircle2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { UserAccount } from '../../../pages/adminPages/UserManagement';
 
 interface UserTableProps {
   users: UserAccount[];
+  startIndex: number;
+  itemsPerPage: number;
+  totalFiltered: number;
+  currentPage: number;
+  totalPages: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   onViewUser: (user: UserAccount) => void;
   onOpenActionModal: (type: 'suspend' | 'delete', user: UserAccount) => void;
   onReactivate: (userId: number) => void;
@@ -11,6 +17,12 @@ interface UserTableProps {
 
 export const UserTable: React.FC<UserTableProps> = ({
   users,
+  startIndex,
+  itemsPerPage,
+  totalFiltered,
+  currentPage,
+  totalPages,
+  setCurrentPage,
   onViewUser,
   onOpenActionModal,
   onReactivate
@@ -91,19 +103,14 @@ export const UserTable: React.FC<UserTableProps> = ({
                         Active
                       </span>
                     )}
-                    {user.status === 'Trial' && (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        Trial
+                    {user.status === 'Inactive' && (
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                        Inactive
                       </span>
                     )}
                     {user.status === 'Suspended' && (
                       <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                         Suspended
-                      </span>
-                    )}
-                    {user.status === 'Inactive' && (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                        Inactive
                       </span>
                     )}
                   </td>
@@ -163,6 +170,54 @@ export const UserTable: React.FC<UserTableProps> = ({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Bar */}
+      <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div>
+          Showing <span className="font-semibold text-slate-700">{totalFiltered === 0 ? 0 : startIndex + 1}</span> to{' '}
+          <span className="font-semibold text-slate-700">
+            {Math.min(startIndex + itemsPerPage, totalFiltered)}
+          </span>{' '}
+          of <span className="font-semibold text-slate-700">{totalFiltered}</span> users
+        </div>
+
+        <div className="inline-flex items-center gap-1.5">
+          <button
+            type="button"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span>Previous</span>
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+            <button
+              key={pageNum}
+              type="button"
+              onClick={() => setCurrentPage(pageNum)}
+              className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                currentPage === pageNum
+                  ? 'bg-[#062E35] text-white shadow-xs'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {pageNum}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+          >
+            <span>Next</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );

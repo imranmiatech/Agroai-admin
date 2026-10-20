@@ -58,10 +58,10 @@ export const PartnersOverviewView: React.FC<PartnersOverviewViewProps> = ({
         </div>
       </div>
 
-      {/* Middle Card: Partners by Category (Donut Chart & Breakdown) */}
+      {/* Middle Card: Partners by Division (Donut Chart & Breakdown) */}
       <div className="bg-white rounded-3xl p-7 border border-slate-200/80 shadow-2xs">
         <h2 className="text-base font-bold text-slate-900 tracking-tight mb-6">
-          Partners by Category
+          Partners by Division
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -93,7 +93,7 @@ export const PartnersOverviewView: React.FC<PartnersOverviewViewProps> = ({
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                 <span className="text-2xl font-bold text-slate-900 leading-none">
-                  37
+                  {totalCategoryCount}
                 </span>
                 <span className="text-[11px] text-slate-400 font-medium mt-0.5">
                   Partners
@@ -105,7 +105,7 @@ export const PartnersOverviewView: React.FC<PartnersOverviewViewProps> = ({
           {/* Category Breakdown Rows */}
           <div className="lg:col-span-8 flex flex-col gap-3.5">
             {categories.map((item, idx) => {
-              const maxCount = 6;
+              const maxCount = Math.max(...categories.map((c) => c.count), 1);
               const percentWidth = Math.round((item.count / maxCount) * 100);
 
               return (

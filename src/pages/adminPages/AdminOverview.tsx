@@ -8,7 +8,7 @@ import { AdminRecentActivity } from '../../components/adminComponents/overview/A
 
 export const AdminOverview: React.FC = () => {
   return (
-    <div className="flex flex-col gap-8 pb-12 font-['Inter']">
+    <div className="w-full max-w-full flex flex-col gap-8 pb-12 font-['Inter']">
       {/* 1. Good Morning Banner */}
       <GoodMorningBanner />
 

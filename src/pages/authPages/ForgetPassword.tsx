@@ -1,23 +1,24 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import {
   ForgotPasswordInputCard,
   ForgotOtpVerificationCard,
 } from '../../components/authComponents/reset';
+import { useForgotPasswordMutation } from '../../redux/feature/auth/authApi';
 
 export const ForgetPassword: React.FC = () => {
   const navigate = useNavigate();
+  const [forgotPasswordMutation, { isLoading }] = useForgotPasswordMutation();
 
   const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // OTP state for simulation
+  // OTP state for standalone card
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -32,13 +33,20 @@ export const ForgetPassword: React.FC = () => {
       return;
     }
 
-    setIsLoading(true);
-
-    // Simulate sending OTP and navigate to Reset Password page
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate('/reset-password', { state: { email } });
-    }, 600);
+    try {
+      const res = await forgotPasswordMutation({ email: email.trim().toLowerCase() }).unwrap();
+      if (res?.data?.debugOtp) {
+        console.info(`[Dev Password Reset OTP]: ${res.data.debugOtp}`);
+      }
+      navigate('/reset-password', { state: { email: email.trim().toLowerCase() } });
+    } catch (err: any) {
+      const msg =
+        err?.data?.message ||
+        err?.error ||
+        err?.message ||
+        'Failed to send password reset code. Please verify your email address.';
+      setErrorMsg(Array.isArray(msg) ? msg.join(', ') : msg);
+    }
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -96,13 +104,8 @@ export const ForgetPassword: React.FC = () => {
             setIsSubmitted(false);
             setOtpCode(['', '', '', '', '', '']);
           }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            setIsLoading(true);
-            setTimeout(() => {
-              setIsLoading(false);
-              navigate('/login');
-            }, 800);
+          onSubmit={() => {
+            navigate('/reset-password', { state: { email: email.trim().toLowerCase() } });
           }}
         />
       )}

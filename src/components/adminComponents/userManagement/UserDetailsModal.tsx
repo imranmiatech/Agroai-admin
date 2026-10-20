@@ -61,7 +61,7 @@ export const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
           </div>
           <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
             <span className="text-slate-400 block mb-1">Account Status</span>
-            <span className={`font-semibold text-sm ${user.status === 'Active' ? 'text-emerald-600' : user.status === 'Trial' ? 'text-indigo-600' : 'text-rose-600'}`}>
+            <span className={`font-semibold text-sm ${user.status === 'Active' ? 'text-emerald-600' : user.status === 'Inactive' ? 'text-slate-600' : 'text-rose-600'}`}>
               {user.status}
             </span>
           </div>

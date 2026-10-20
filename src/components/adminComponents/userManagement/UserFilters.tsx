@@ -62,7 +62,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
-            <option value="Trial">Trial</option>
+            <option value="Inactive">Inactive</option>
             <option value="Suspended">Suspended</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">

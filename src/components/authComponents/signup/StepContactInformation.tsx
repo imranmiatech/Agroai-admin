@@ -12,7 +12,7 @@ interface StepContactInformationProps {
   contactPhone: string;
   setContactPhone: (val: string) => void;
   businessName: string;
-  businessCategory: string;
+  businessCategory?: string;
   city: string;
   country: string;
   isSubmitting: boolean;
@@ -145,16 +145,18 @@ export const StepContactInformation: React.FC<StepContactInformationProps> = ({
                   {businessName || 'Carrefour'}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-[#4B5563]">
-                <span>Category</span>
-                <span className="font-medium text-[#1F2A37]">
-                  {businessCategory || 'Grocery & Supermarket'}
-                </span>
-              </div>
+              {businessCategory && (
+                <div className="flex items-center justify-between text-[#4B5563]">
+                  <span>Category</span>
+                  <span className="font-medium text-[#1F2A37]">
+                    {businessCategory}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between text-[#4B5563]">
                 <span>Location</span>
                 <span className="font-medium text-[#1F2A37]">
-                  {city ? `${city}, ${country}` : 'Dubai, United Arab Emirates'}
+                  {city ? `${city}, ${country}` : 'Dhaka, Bangladesh'}
                 </span>
               </div>
             </div>

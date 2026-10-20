@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 import {
@@ -6,9 +6,14 @@ import {
   ForgotPasswordCard,
   AuthSuccessCard,
 } from '../../components/authComponents/login';
+import { useLoginMutation } from '../../redux/feature/auth/authApi';
+import { useAppDispatch } from '../../redux/store/hooks';
+import { setCredentials } from '../../redux/feature/auth/authSlice';
 
 export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [loginMutation, { isLoading }] = useLoginMutation();
 
   // Sub-view: 'auth' | 'forgot_password' | 'success'
   const [viewState, setViewState] = useState<'auth' | 'forgot_password' | 'success'>('auth');
@@ -17,15 +22,15 @@ export const AuthPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSent, setForgotSent] = useState(false);
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -38,22 +43,39 @@ export const AuthPage: React.FC = () => {
       return;
     }
 
-    setIsLoading(true);
+    try {
+      const res = await loginMutation({
+        email: email.trim().toLowerCase(),
+        password,
+      }).unwrap();
 
-    // Simulate authentication
-    setTimeout(() => {
-      setIsLoading(false);
-      setSuccessMsg('Signed in successfully!');
+      const user = res?.data?.user || res?.user;
+      const token = res?.data?.accessToken || res?.data?.token || res?.accessToken;
+      const refreshToken = res?.data?.refreshToken || res?.refreshToken;
+
+      if (!user || !token) {
+        throw new Error('Invalid response structure received from authentication server.');
+      }
+
+      dispatch(setCredentials({ user, token, refreshToken }));
+      setSuccessMsg(res?.message || 'Signed in successfully!');
       setViewState('success');
 
       setTimeout(() => {
-        if (email.toLowerCase().includes('admin')) {
+        if (user.role === 'ADMIN') {
           navigate('/admin/overview');
         } else {
           navigate('/vendor/overview');
         }
-      }, 800);
-    }, 600);
+      }, 700);
+    } catch (err: any) {
+      const msg =
+        err?.data?.message ||
+        err?.error ||
+        err?.message ||
+        'Unable to log in. Please check your credentials or account status.';
+      setErrorMsg(Array.isArray(msg) ? msg.join(', ') : msg);
+    }
   };
 
   const handleForgotSubmit = (e: React.FormEvent) => {
@@ -62,9 +84,9 @@ export const AuthPage: React.FC = () => {
       setErrorMsg('Please enter your email address.');
       return;
     }
-    setIsLoading(true);
+    setIsForgotLoading(true);
     setTimeout(() => {
-      setIsLoading(false);
+      setIsForgotLoading(false);
       setForgotSent(true);
     }, 600);
   };
@@ -93,7 +115,7 @@ export const AuthPage: React.FC = () => {
           forgotEmail={forgotEmail}
           setForgotEmail={setForgotEmail}
           forgotSent={forgotSent}
-          isLoading={isLoading}
+          isLoading={isForgotLoading}
           errorMsg={errorMsg}
           onSubmit={handleForgotSubmit}
           onBackToLogin={() => {

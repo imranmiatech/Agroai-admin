@@ -47,17 +47,16 @@ export const VendorsPage = () => {
     expiresIn: '30 days'
   });
 
-  // Category breakdown data matching Figma
+  // Division breakdown data for Partners by Division
   const categories: CategoryItem[] = [
-    { name: 'Indoor Playground', count: 5, color: '#EF4444' },
-    { name: 'Supermarket', count: 6, color: '#059669' },
-    { name: 'Entertainment', count: 5, color: '#0EA5E9' },
-    { name: 'Toy Stores', count: 4, color: '#8B5CF6' },
-    { name: 'General Store', count: 6, color: '#F59E0B' },
-    { name: 'Learning Centres', count: 4, color: '#EC4899' },
-    { name: 'Book Stores', count: 4, color: '#F43F5E' },
-    { name: 'Children\'s Cafés', count: 4, color: '#14B8A6' },
-    { name: 'Other', count: 3, color: '#94A3B8' }
+    { name: 'Dhaka', count: 9, color: '#059669' },
+    { name: 'Chattogram', count: 7, color: '#0EA5E9' },
+    { name: 'Rajshahi', count: 5, color: '#F59E0B' },
+    { name: 'Khulna', count: 4, color: '#14B8A6' },
+    { name: 'Barishal', count: 3, color: '#8B5CF6' },
+    { name: 'Sylhet', count: 4, color: '#10B981' },
+    { name: 'Rangpur', count: 3, color: '#EC4899' },
+    { name: 'Mymensingh', count: 2, color: '#F97316' }
   ];
 
   // Partnership requests data
@@ -66,7 +65,7 @@ export const VendorsPage = () => {
       id: 'REQ-201',
       businessName: 'Safe Sleep Practices for Infants',
       description: 'Evidence-based safe sleep .........',
-      category: 'Indoor Playground',
+      category: 'Dhaka',
       ownerName: 'Clara Gallagher',
       email: 'clara@safesleepireland.ie',
       phone: '+353 87 123 4567',
@@ -75,77 +74,77 @@ export const VendorsPage = () => {
     },
     {
       id: 'REQ-202',
-      businessName: 'Safe Sleep Practices for Infants',
-      description: 'Evidence-based safe sleep .........',
-      category: 'Indoor Playground',
+      businessName: 'Green Valley Organic Seeds',
+      description: 'High quality agricultural inputs and seeds.',
+      category: 'Dhaka',
       ownerName: 'Liam O’Sullivan',
-      email: 'liam@safesleepcare.ie',
+      email: 'liam@greenvalley.com',
       phone: '+353 89 234 5678',
       status: 'In discussion',
       submittedDate: 'Jul 6, 2025'
     },
     {
       id: 'REQ-203',
-      businessName: 'Safe Sleep Practices for Infants',
-      description: 'Evidence-based safe sleep .........',
-      category: 'Indoor Playground',
+      businessName: 'Chittagong Coastal Fisheries',
+      description: 'Fresh seafood supply and modern aquaculture.',
+      category: 'Chattogram',
       ownerName: 'Aoife Kelly',
-      email: 'aoife@safesleepwellness.com',
+      email: 'aoife@coastalmarine.com',
       phone: '+353 86 345 6789',
       status: 'Contacted',
       submittedDate: 'Jul 6, 2025'
     },
     {
       id: 'REQ-204',
-      businessName: 'Safe Sleep Practices for Infants',
-      description: 'Evidence-based safe sleep .........',
-      category: 'Indoor Playground',
+      businessName: 'Rajshahi Mango & Silk Producers',
+      description: 'Authentic seasonal fruits and artisanal goods.',
+      category: 'Rajshahi',
       ownerName: 'Sean Murphy',
-      email: 'sean@safesleeppractices.ie',
+      email: 'sean@rajshahiproduce.com',
       phone: '+353 85 456 7890',
       status: 'new',
       submittedDate: 'Jul 6, 2025'
     },
     {
       id: 'REQ-205',
-      businessName: 'Safe Sleep Practices for Infants',
-      description: 'Evidence-based safe sleep .........',
-      category: 'Indoor Playground',
+      businessName: 'Sylhet Valley Tea Plantations',
+      description: 'Premium organic tea leaves directly from gardens.',
+      category: 'Sylhet',
       ownerName: 'Niamh Byrne',
-      email: 'niamh@safesleepguidance.ie',
+      email: 'niamh@sylhetvalleytea.com',
       phone: '+353 87 567 8901',
       status: 'declined',
       submittedDate: 'Jul 6, 2025'
     },
     {
       id: 'REQ-206',
-      businessName: 'SuperValu Fresh Market Dublin',
-      description: 'Organic baby produce & nutritious family meal prep packs.',
-      category: 'Supermarket',
+      businessName: 'Khulna Agro & Poultry Care',
+      description: 'Livestock nutrition and eco-friendly poultry feeds.',
+      category: 'Khulna',
       ownerName: 'Conor Walsh',
-      email: 'conor.walsh@supervalu.ie',
+      email: 'conor.walsh@khulnaagro.com',
       phone: '+353 89 678 9012',
       status: 'Contacted',
       submittedDate: 'Jul 5, 2025'
     },
     {
       id: 'REQ-207',
-      businessName: 'Little Learners Sensory Academy',
-      description: 'Early childhood development and motor skills workshops.',
-      category: 'Learning Centres',
+      businessName: 'Barishal River Delta Produce',
+      description: 'Rice, guava, and riverine organic harvest.',
+      category: 'Barishal',
       ownerName: 'Sinead Dunne',
-      email: 'sinead@littlelearners.ie',
+      email: 'sinead@barishalproduce.com',
       phone: '+353 86 789 0123',
       status: 'new',
       submittedDate: 'Jul 4, 2025'
     },
     {
       id: 'REQ-208',
-      businessName: 'Dublin Toy Emporium',
-      description: 'Eco-certified wooden toys, puzzles, and sensory items.',
-      category: 'Toy Stores',
+      businessName: 'Rangpur Cold Storage & Crops',
+      description: 'Potato, maize and crop preservation facilities.',
+      category: 'Rangpur',
       ownerName: 'Patrick O’Donnell',
-      email: 'patrick@dublintoyemporium.com',
+      email: 'patrick@rangpurstorage.com',
       phone: '+353 85 890 1234',
       status: 'In discussion',
       submittedDate: 'Jul 3, 2025'

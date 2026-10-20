@@ -1,9 +1,9 @@
-import React from 'react';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+﻿import React from 'react';
+import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 
 interface StepOtpVerificationProps {
-  otpOption: 'email' | 'phone';
-  phoneNumber: string;
+  otpOption?: 'email' | 'phone';
+  phoneNumber?: string;
   email: string;
   otpValue: string;
   setOtpValue: (val: string) => void;
@@ -11,13 +11,12 @@ interface StepOtpVerificationProps {
   resendTimer: number;
   onResendCode: () => void;
   errorMsg: string;
+  isVerifying?: boolean;
   onBack: () => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
 export const StepOtpVerification: React.FC<StepOtpVerificationProps> = ({
-  otpOption,
-  phoneNumber,
   email,
   otpValue,
   setOtpValue,
@@ -25,6 +24,7 @@ export const StepOtpVerification: React.FC<StepOtpVerificationProps> = ({
   resendTimer,
   onResendCode,
   errorMsg,
+  isVerifying = false,
   onBack,
   onSubmit,
 }) => {
@@ -36,7 +36,7 @@ export const StepOtpVerification: React.FC<StepOtpVerificationProps> = ({
           Enter the code
         </h1>
         <p className="text-[15px] sm:text-[16px] font-medium text-[#4B5563] mt-1">
-          Enter the code we’ve sent to your {otpOption === 'phone' ? 'phone' : 'e-mail'}
+          Enter the 6-digit verification code sent to your email
         </p>
       </div>
 
@@ -51,7 +51,7 @@ export const StepOtpVerification: React.FC<StepOtpVerificationProps> = ({
         <form onSubmit={onSubmit} className="space-y-6">
           <div>
             <label className="block text-[14px] font-medium text-[#20293A] mb-2">
-              One time password <span className="text-[#EF4444]">*</span>
+              One time password (OTP) <span className="text-[#EF4444]">*</span>
             </label>
             <div className="w-full h-[46px] px-4 bg-[#F8FAFC] border border-[#EEF2F6] rounded-[14px] flex items-center focus-within:border-[#0B5460] focus-within:ring-2 focus-within:ring-[#0B5460]/10 transition-all">
               <input
@@ -60,24 +60,24 @@ export const StepOtpVerification: React.FC<StepOtpVerificationProps> = ({
                 autoFocus
                 value={otpValue}
                 onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ''))}
-                placeholder="Enter your otp"
-                className="w-full bg-transparent text-[15px] font-medium tracking-widest text-[#0F172A] placeholder:tracking-normal placeholder:text-[#94A3B8] outline-none"
+                placeholder="Enter 6-digit code"
+                className="w-full bg-transparent text-[16px] font-medium tracking-[0.3em] text-[#0F172A] placeholder:tracking-normal placeholder:text-[#94A3B8] outline-none"
               />
             </div>
 
             {/* Resend Timer / Action */}
             <div className="mt-3 flex items-center justify-between text-xs text-[#64748B]">
-              <span>Target: {otpOption === 'phone' ? (phoneNumber || 'phone') : (email || 'e-mail')}</span>
+              <span>Sent to: <strong className="text-[#0B5460]">{email}</strong></span>
               {canResend ? (
                 <button
                   type="button"
                   onClick={onResendCode}
-                  className="text-[#0B5460] font-semibold hover:underline"
+                  className="text-[#0B5460] font-semibold hover:underline cursor-pointer"
                 >
                   Resend code
                 </button>
               ) : (
-                <span>Resend code in {resendTimer}s</span>
+                <span>Resend in {resendTimer}s</span>
               )}
             </div>
           </div>
@@ -86,8 +86,9 @@ export const StepOtpVerification: React.FC<StepOtpVerificationProps> = ({
           <div className="border-t border-[#EEF2F6] pt-4 flex items-center justify-between">
             <button
               type="button"
+              disabled={isVerifying}
               onClick={onBack}
-              className="bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#1F2A37] px-5 py-2.5 rounded-[16px] font-semibold text-[14px] transition-all flex items-center gap-1.5 cursor-pointer"
+              className="bg-[#F1F5F9] hover:bg-[#E2E8F0] disabled:opacity-50 text-[#1F2A37] px-5 py-2.5 rounded-[16px] font-semibold text-[14px] transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
@@ -95,10 +96,20 @@ export const StepOtpVerification: React.FC<StepOtpVerificationProps> = ({
 
             <button
               type="submit"
-              className="bg-[#0B5460] hover:bg-[#08424C] text-white px-7 py-2.5 rounded-[16px] font-semibold text-[13.5px] transition-all flex items-center gap-1.5 shadow-sm active:scale-[0.99] cursor-pointer"
+              disabled={isVerifying || otpValue.length < 6}
+              className="bg-[#0B5460] hover:bg-[#08424C] disabled:opacity-50 text-white px-7 py-2.5 rounded-[16px] font-semibold text-[13.5px] transition-all flex items-center gap-1.5 shadow-sm active:scale-[0.99] cursor-pointer"
             >
-              <span>Continue</span>
-              <ArrowRight className="w-4 h-4" />
+              {isVerifying ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Verifying...</span>
+                </>
+              ) : (
+                <>
+                  <span>Verify & Continue</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         </form>

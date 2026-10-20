@@ -1,6 +1,17 @@
-import React from 'react';
-import { ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowRight, ArrowLeft, ChevronDown, Check } from 'lucide-react';
 import { SignUpProgressBar } from './SignUpProgressBar';
+
+export const BANGLADESH_DIVISIONS = [
+  'Dhaka',
+  'Chattogram',
+  'Rajshahi',
+  'Khulna',
+  'Barishal',
+  'Sylhet',
+  'Rangpur',
+  'Mymensingh',
+];
 
 interface StepBusinessLocationProps {
   country: string;
@@ -8,6 +19,7 @@ interface StepBusinessLocationProps {
   countries: string[];
   city: string;
   setCity: (val: string) => void;
+  cities?: string[];
   address: string;
   setAddress: (val: string) => void;
   openingHours: string;
@@ -23,6 +35,7 @@ export const StepBusinessLocation: React.FC<StepBusinessLocationProps> = ({
   countries,
   city,
   setCity,
+  cities: _cities,
   address,
   setAddress,
   openingHours,
@@ -31,6 +44,22 @@ export const StepBusinessLocation: React.FC<StepBusinessLocationProps> = ({
   onBack,
   onSubmit,
 }) => {
+  const [isCityOpen, setIsCityOpen] = useState(false);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close custom dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
+        setIsCityOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="w-full max-w-[620px] flex flex-col items-center">
       {/* Header */}
@@ -65,36 +94,94 @@ export const StepBusinessLocation: React.FC<StepBusinessLocationProps> = ({
               <label className="block text-[14px] font-medium text-[#20293A] mb-1.5">
                 Country <span className="text-[#EF4444]">*</span>
               </label>
-              <div className="relative w-full h-[42px] bg-[#F8FAFC] border border-[#EEF2F6] rounded-[14px] flex items-center px-3.5 focus-within:border-[#0B5460] focus-within:ring-2 focus-within:ring-[#0B5460]/10 transition-all">
+              <div className="group relative w-full h-[44px] bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] hover:border-[#94A3B8]/60 rounded-[14px] flex items-center px-3.5 focus-within:border-[#0B5460] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#0B5460]/10 shadow-xs hover:shadow-sm transition-all duration-200">
                 <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  className="w-full bg-transparent text-[14px] text-[#0F172A] outline-none appearance-none cursor-pointer pr-6"
+                  className={`w-full bg-transparent text-[14px] outline-none appearance-none cursor-pointer pr-7 font-medium transition-colors ${
+                    country ? 'text-[#0F172A]' : 'text-[#94A3B8]'
+                  }`}
                 >
-                  <option value="" disabled>Select country</option>
+                  <option value="" disabled className="text-[#94A3B8] bg-white">Select country</option>
                   {countries.map((c) => (
-                    <option key={c} value={c}>
+                    <option key={c} value={c} className="text-[#0F172A] bg-white py-1">
                       {c}
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-4 h-4 text-[#64748B] pointer-events-none absolute right-3.5" />
+                <ChevronDown className="w-4 h-4 text-[#94A3B8] group-hover:text-[#0B5460] group-focus-within:text-[#0B5460] pointer-events-none absolute right-3.5 transition-colors duration-200" />
               </div>
             </div>
 
-            <div>
+            {/* City Custom Dropdown */}
+            <div className="relative" ref={cityDropdownRef}>
               <label className="block text-[14px] font-medium text-[#20293A] mb-1.5">
                 City <span className="text-[#EF4444]">*</span>
               </label>
-              <div className="w-full h-[42px] px-3.5 bg-[#F8FAFC] border border-[#EEF2F6] rounded-[14px] flex items-center focus-within:border-[#0B5460] focus-within:ring-2 focus-within:ring-[#0B5460]/10 transition-all">
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="e:g: Dubai"
-                  className="w-full bg-transparent text-[14px] text-[#0F172A] placeholder:text-[#94A3B8] outline-none"
+
+              {/* Trigger Button */}
+              <button
+                type="button"
+                onClick={() => setIsCityOpen(!isCityOpen)}
+                className={`group relative w-full h-[44px] bg-[#F8FAFC] hover:bg-white border rounded-[14px] flex items-center justify-between px-3.5 shadow-xs hover:shadow-sm transition-all duration-200 text-left outline-none ${
+                  isCityOpen
+                    ? 'border-[#0B5460] bg-white ring-4 ring-[#0B5460]/10'
+                    : 'border-[#E2E8F0] hover:border-[#94A3B8]/60'
+                }`}
+              >
+                <span
+                  className={`text-[14px] font-medium truncate ${
+                    city ? 'text-[#0F172A]' : 'text-[#94A3B8]'
+                  }`}
+                >
+                  {city || 'Select City'}
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-[#94A3B8] transition-transform duration-200 ${
+                    isCityOpen ? 'rotate-180 text-[#0B5460]' : 'group-hover:text-[#0B5460]'
+                  }`}
                 />
-              </div>
+              </button>
+
+              {/* Hidden input for HTML5 required form validation */}
+              <input
+                type="text"
+                value={city}
+                onChange={() => {}}
+                required
+                tabIndex={-1}
+                className="sr-only"
+              />
+
+              {/* Dropdown Options */}
+              {isCityOpen && (
+                <div className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 bg-white border border-[#E2E8F0] rounded-[16px] shadow-xl p-1.5 max-h-[240px] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">
+                    Select Bangladesh Division
+                  </div>
+                  {BANGLADESH_DIVISIONS.map((division) => {
+                    const isSelected = city === division;
+                    return (
+                      <button
+                        key={division}
+                        type="button"
+                        onClick={() => {
+                          setCity(division);
+                          setIsCityOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-[10px] text-[13.5px] font-medium transition-colors ${
+                          isSelected
+                            ? 'bg-[#0B5460]/10 text-[#0B5460] font-semibold'
+                            : 'text-[#334155] hover:bg-[#F8FAFC] hover:text-[#0F172A]'
+                        }`}
+                      >
+                        <span>{division}</span>
+                        {isSelected && <Check className="w-4 h-4 text-[#0B5460]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -103,7 +190,7 @@ export const StepBusinessLocation: React.FC<StepBusinessLocationProps> = ({
             <label className="block text-[14px] font-medium text-[#20293A] mb-1.5">
               Address
             </label>
-            <div className="w-full h-[42px] px-3.5 bg-[#F8FAFC] border border-[#EEF2F6] rounded-[14px] flex items-center focus-within:border-[#0B5460] focus-within:ring-2 focus-within:ring-[#0B5460]/10 transition-all">
+            <div className="w-full h-[44px] px-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] hover:border-[#94A3B8]/60 rounded-[14px] flex items-center focus-within:border-[#0B5460] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#0B5460]/10 shadow-xs hover:shadow-sm transition-all duration-200">
               <input
                 type="text"
                 value={address}
@@ -119,7 +206,7 @@ export const StepBusinessLocation: React.FC<StepBusinessLocationProps> = ({
             <label className="block text-[14px] font-medium text-[#20293A] mb-1.5">
               Opening Hours
             </label>
-            <div className="w-full h-[42px] px-3.5 bg-[#F8FAFC] border border-[#EEF2F6] rounded-[14px] flex items-center focus-within:border-[#0B5460] focus-within:ring-2 focus-within:ring-[#0B5460]/10 transition-all">
+            <div className="w-full h-[44px] px-3.5 bg-[#F8FAFC] hover:bg-white border border-[#E2E8F0] hover:border-[#94A3B8]/60 rounded-[14px] flex items-center focus-within:border-[#0B5460] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#0B5460]/10 shadow-xs hover:shadow-sm transition-all duration-200">
               <input
                 type="text"
                 value={openingHours}

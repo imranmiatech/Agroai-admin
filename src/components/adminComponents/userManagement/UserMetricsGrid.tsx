@@ -8,9 +8,15 @@ import {
   ArrowUpRight, 
   ArrowDownRight 
 } from 'lucide-react';
+import { useGetUserMetricsQuery } from '../../../redux/feature/users/usersApi';
 
 export const UserMetricsGrid: React.FC = () => {
-  const userMetrics = [
+  const { data: metricsResponse, isLoading } = useGetUserMetricsQuery();
+
+  const metricsData = metricsResponse?.data;
+
+  // Initial fallback/default state
+  const defaultMetrics = [
     {
       id: 'total-users',
       value: '1,372',
@@ -63,8 +69,22 @@ export const UserMetricsGrid: React.FC = () => {
     }
   ];
 
+  // Map backend card data dynamically if available
+  const userMetrics = defaultMetrics.map((defaultCard) => {
+    const liveCard = metricsData?.cards?.find((c) => c.id === defaultCard.id);
+    if (!liveCard) return defaultCard;
+
+    return {
+      ...defaultCard,
+      value: liveCard.value ?? defaultCard.value,
+      change: liveCard.change ?? defaultCard.change,
+      isPositive: liveCard.isPositive ?? defaultCard.isPositive,
+      waveColor: liveCard.waveColor ?? defaultCard.waveColor,
+    };
+  });
+
   return (
-    <div className="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+    <div className={`grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 transition-opacity duration-200 ${isLoading ? 'opacity-80' : 'opacity-100'}`}>
       {userMetrics.map((card) => (
         <div 
           key={card.id}
