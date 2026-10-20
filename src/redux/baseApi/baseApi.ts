@@ -1,4 +1,4 @@
-import {
+﻿import {
   createApi,
   fetchBaseQuery,
   type BaseQueryFn,
@@ -35,8 +35,11 @@ const baseQueryWithReauth: BaseQueryFn<
   const result = await rawBaseQuery(args, api, extraOptions);
 
   if (result.error && result.error.status === 401) {
-    // Automatically log out if token is expired or invalid
-    api.dispatch(logout());
+    const url = typeof args === 'string' ? args : (args.url || '');
+    // Do not automatically log out if 401 is returned from change-password (wrong current password) or login
+    if (!url.includes('/change-password') && !url.includes('/login')) {
+      api.dispatch(logout());
+    }
   }
 
   return result;
@@ -45,6 +48,6 @@ const baseQueryWithReauth: BaseQueryFn<
 export const baseApi = createApi({
   reducerPath: 'baseApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Auth', 'Profile', 'Order', 'Product', 'Vendor'],
+  tagTypes: ['User', 'Auth', 'Profile', 'Order', 'Product', 'Vendor', 'Billing'],
   endpoints: () => ({}),
 });

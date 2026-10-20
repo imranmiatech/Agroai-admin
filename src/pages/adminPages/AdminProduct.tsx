@@ -1,351 +1,134 @@
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { 
   ProductMetricsGrid, 
   ProductFilters, 
   ProductTable, 
   ProductModals 
 } from '../../components/adminComponents/product';
+import {
+  useGetProductsQuery,
+  useUpdateProductStatusMutation,
+  useDeleteProductMutation,
+  useProductsPrefetch,
+  type ProductItem as BackendProductItem,
+} from '../../redux';
 
 export interface ProductItem {
   id: string;
   sku: string;
   title: string;
-  category: 'Baby Care' | 'Nursery' | 'Nutrition' | 'Safety' | 'Toys' | 'Feeding';
+  category: string;
   price: number;
+  compareAtPrice?: number | null;
   stock: number;
   vendor: string;
-  status: 'Active' | 'Suspended' | 'Out of Stock';
+  status: 'Active' | 'Suspended' | 'Out of Stock' | string;
+  summary?: string;
   description: string;
-  imageColor: string;
-  rating: number;
+  highlights?: string[];
+  badges?: string[];
+  specifications?: Record<string, string> | null;
+  imageColor?: string;
+  thumbnail?: string | null;
+  images?: string[];
+  rating?: number;
 }
 
-export const AdminProduct = () => {
-  // 24 realistic products for multi-page pagination demo
-  const [products, setProducts] = useState<ProductItem[]>([
-    {
-      id: 'PRD-01',
-      sku: 'ALU-BC-001',
-      title: 'Organic Bamboo Baby Swaddle Wraps (Pack of 3)',
-      category: 'Baby Care',
-      price: 28.50,
-      stock: 45,
-      vendor: 'PureBotanica Organics',
-      status: 'Active',
-      description: 'Ultra-soft, breathable bamboo cotton swaddles designed for sensitive newborn skin.',
-      imageColor: '#E0F7FA',
-      rating: 4.9
-    },
-    {
-      id: 'PRD-02',
-      sku: 'ALU-SF-002',
-      title: 'Smart HD WiFi Baby Monitor with Night Vision',
-      category: 'Safety',
-      price: 139.99,
-      stock: 14,
-      vendor: 'OmniGadget World',
-      status: 'Active',
-      description: '1080p full HD camera with temperature sensor, two-way audio talk, and encrypted mobile stream.',
-      imageColor: '#E0E7FF',
-      rating: 4.8
-    },
-    {
-      id: 'PRD-03',
-      sku: 'ALU-FD-003',
-      title: 'Ergonomic Silicone Baby Feeding Set & Bibs',
-      category: 'Feeding',
-      price: 24.99,
-      stock: 0,
-      vendor: 'Little Sprout Essentials',
-      status: 'Out of Stock',
-      description: 'BPA-free suction plate, bowl, training cup, and adjustable waterproof silicone bibs.',
-      imageColor: '#FEF3C7',
-      rating: 4.7
-    },
-    {
-      id: 'PRD-04',
-      sku: 'ALU-NR-004',
-      title: 'Convertible Wooden Crib & Toddler Bed 3-in-1',
-      category: 'Nursery',
-      price: 320.00,
-      stock: 8,
-      vendor: 'Dunnes Family Lifestyle',
-      status: 'Active',
-      description: 'Solid Nordic pine crib with non-toxic finish that transitions seamlessly to a toddler daybed.',
-      imageColor: '#DCFCE7',
-      rating: 4.9
-    },
-    {
-      id: 'PRD-05',
-      sku: 'ALU-TY-005',
-      title: 'Montessori Wooden Sensory Stacking Blocks',
-      category: 'Toys',
-      price: 34.00,
-      stock: 22,
-      vendor: 'The Wooden Toy Box',
-      status: 'Active',
-      description: 'Handcrafted beechwood blocks that promote fine motor skills and tactile problem-solving.',
-      imageColor: '#F3E8FF',
-      rating: 5.0
-    },
-    {
-      id: 'PRD-06',
-      sku: 'ALU-NT-006',
-      title: 'Natural Baby Multivitamin Liquid Drops 50ml',
-      category: 'Nutrition',
-      price: 18.75,
-      stock: 3,
-      vendor: 'PureBotanica Organics',
-      status: 'Active',
-      description: 'Pediatrician-formulated vitamin D3, zinc, and botanical extracts for daily immunity.',
-      imageColor: '#FEE2E2',
-      rating: 4.6
-    },
-    {
-      id: 'PRD-07',
-      sku: 'ALU-BC-007',
-      title: 'Calming Chamomile & Oat Baby Wash & Shampoo',
-      category: 'Baby Care',
-      price: 16.50,
-      stock: 35,
-      vendor: 'Dunnes Family Lifestyle',
-      status: 'Active',
-      description: 'Tear-free hypoallergenic wash formulated with colloidal oatmeal and natural chamomile.',
-      imageColor: '#E0F7FA',
-      rating: 4.9
-    },
-    {
-      id: 'PRD-08',
-      sku: 'ALU-SF-008',
-      title: 'No-Contact Infrared Forehead Thermometer',
-      category: 'Safety',
-      price: 42.00,
-      stock: 19,
-      vendor: 'OmniGadget World',
-      status: 'Active',
-      description: 'Instant 1-second accurate fever reading with color-coded fever guidance screen.',
-      imageColor: '#E0E7FF',
-      rating: 4.8
-    },
-    {
-      id: 'PRD-09',
-      sku: 'ALU-TY-009',
-      title: 'Organic Cotton Soft Activity Crinkle Book',
-      category: 'Toys',
-      price: 15.99,
-      stock: 40,
-      vendor: 'The Wooden Toy Box',
-      status: 'Active',
-      description: 'High-contrast visual stimulation crinkle cloth book for sensory infant discovery.',
-      imageColor: '#F3E8FF',
-      rating: 4.7
-    },
-    {
-      id: 'PRD-10',
-      sku: 'ALU-FD-010',
-      title: 'Anti-Colic Glass Baby Bottles Duo (240ml)',
-      category: 'Feeding',
-      price: 32.50,
-      stock: 0,
-      vendor: 'Little Sprout Essentials',
-      status: 'Out of Stock',
-      description: 'Thermal-shock resistant borosilicate glass with slow-flow peristaltic silicone nipples.',
-      imageColor: '#FEF3C7',
-      rating: 4.9
-    },
-    {
-      id: 'PRD-11',
-      sku: 'ALU-NR-011',
-      title: 'Breathable Dual-Sided Crib Mattress (Eco-Tex)',
-      category: 'Nursery',
-      price: 189.00,
-      stock: 6,
-      vendor: 'Dunnes Family Lifestyle',
-      status: 'Active',
-      description: '100% washable core with firm infant side and plush toddler comfort side.',
-      imageColor: '#DCFCE7',
-      rating: 5.0
-    },
-    {
-      id: 'PRD-12',
-      sku: 'ALU-BC-012',
-      title: 'Electric Gentle Baby Nail Trimmer with LED Light',
-      category: 'Baby Care',
-      price: 22.00,
-      stock: 28,
-      vendor: 'OmniGadget World',
-      status: 'Active',
-      description: 'Whisper-quiet rotary filer with 6 cushioning grinding heads for tiny delicate nails.',
-      imageColor: '#E0F7FA',
-      rating: 4.6
-    },
-    {
-      id: 'PRD-13',
-      sku: 'ALU-NT-013',
-      title: 'Organic Prune & Apple Gentle Digest Puree Pouch',
-      category: 'Nutrition',
-      price: 3.20,
-      stock: 120,
-      vendor: 'PureBotanica Organics',
-      status: 'Active',
-      description: 'Stage 1 non-GMO USDA certified pureed organic fruit with no added sugars.',
-      imageColor: '#FEE2E2',
-      rating: 4.8
-    },
-    {
-      id: 'PRD-14',
-      sku: 'ALU-SF-014',
-      title: 'Corner & Edge Proofing Foam Guards (Pack of 16)',
-      category: 'Safety',
-      price: 14.50,
-      stock: 55,
-      vendor: 'OmniGadget World',
-      status: 'Active',
-      description: 'High-density impact absorbing rubber foam corners with pre-applied 3M adhesive.',
-      imageColor: '#E0E7FF',
-      rating: 4.5
-    },
-    {
-      id: 'PRD-15',
-      sku: 'ALU-TY-015',
-      title: 'Natural Rubber Teething Giraffe with Squeaker',
-      category: 'Toys',
-      price: 21.00,
-      stock: 18,
-      vendor: 'The Wooden Toy Box',
-      status: 'Active',
-      description: '100% natural hevea tree sap rubber teething toy painted with food-grade plant pigments.',
-      imageColor: '#F3E8FF',
-      rating: 4.9
-    },
-    {
-      id: 'PRD-16',
-      sku: 'ALU-FD-016',
-      title: 'Portable Baby Food Warm & Cool Insulated Flask',
-      category: 'Feeding',
-      price: 27.99,
-      stock: 11,
-      vendor: 'Little Sprout Essentials',
-      status: 'Active',
-      description: 'Vacuum insulated double-wall stainless steel container that keeps meals warm for 8 hours.',
-      imageColor: '#FEF3C7',
-      rating: 4.7
-    },
-    {
-      id: 'PRD-17',
-      sku: 'ALU-NR-017',
-      title: 'Adjustable Beechwood High Chair with Cushion',
-      category: 'Nursery',
-      price: 210.00,
-      stock: 5,
-      vendor: 'Dunnes Family Lifestyle',
-      status: 'Suspended',
-      description: 'Ergonomic highchair adjustable seat depth and footrest, suitable from 6 months to teens.',
-      imageColor: '#DCFCE7',
-      rating: 4.4
-    },
-    {
-      id: 'PRD-18',
-      sku: 'ALU-BC-018',
-      title: 'Zinc Oxide Diaper Rash Barrier Cream 100g',
-      category: 'Baby Care',
-      price: 11.50,
-      stock: 65,
-      vendor: 'PureBotanica Organics',
-      status: 'Active',
-      description: 'Rich healing ointment with 25% non-nano zinc oxide and shea butter for instant comfort.',
-      imageColor: '#E0F7FA',
-      rating: 4.9
-    },
-    {
-      id: 'PRD-19',
-      sku: 'ALU-SF-019',
-      title: 'Auto-Close Extra Wide Baby Safety Gate',
-      category: 'Safety',
-      price: 79.99,
-      stock: 9,
-      vendor: 'OmniGadget World',
-      status: 'Active',
-      description: 'Pressure-mounted steel security gate with dual-locking handle mechanism for stairs and hallways.',
-      imageColor: '#E0E7FF',
-      rating: 4.8
-    },
-    {
-      id: 'PRD-20',
-      sku: 'ALU-NT-020',
-      title: 'Plant-Based DHA & Omega-3 Gummies for Kids',
-      category: 'Nutrition',
-      price: 24.00,
-      stock: 0,
-      vendor: 'PureBotanica Organics',
-      status: 'Out of Stock',
-      description: 'Marine algae derived brain development omega-3 gummies with natural orange flavor.',
-      imageColor: '#FEE2E2',
-      rating: 4.7
-    },
-    {
-      id: 'PRD-21',
-      sku: 'ALU-TY-021',
-      title: 'Silicone Stacking Rainbow & Nesting Arcs',
-      category: 'Toys',
-      price: 26.50,
-      stock: 31,
-      vendor: 'The Wooden Toy Box',
-      status: 'Active',
-      description: 'Flexible chewable silicone rainbow arches designed for creative open-ended stem play.',
-      imageColor: '#F3E8FF',
-      rating: 4.9
-    },
-    {
-      id: 'PRD-22',
-      sku: 'ALU-NR-022',
-      title: 'Smart Sound Machine & Programmable Night Light',
-      category: 'Nursery',
-      price: 68.00,
-      stock: 12,
-      vendor: 'OmniGadget World',
-      status: 'Active',
-      description: 'White noise, soothing lullabies, and wake-up light controlled via Bluetooth companion app.',
-      imageColor: '#DCFCE7',
-      rating: 4.9
-    },
-    {
-      id: 'PRD-23',
-      sku: 'ALU-FD-023',
-      title: 'Compact Foldable Travel Booster Seat with Tray',
-      category: 'Feeding',
-      price: 49.00,
-      stock: 17,
-      vendor: 'Dunnes Family Lifestyle',
-      status: 'Active',
-      description: 'Lightweight booster chair that clamps securely onto standard dining chairs, includes carry bag.',
-      imageColor: '#FEF3C7',
-      rating: 4.8
-    },
-    {
-      id: 'PRD-24',
-      sku: 'ALU-NT-024',
-      title: 'Electrolyte Hydration Sachets for Kids (Pack of 10)',
-      category: 'Nutrition',
-      price: 15.00,
-      stock: 60,
-      vendor: 'PureBotanica Organics',
-      status: 'Active',
-      description: 'Natural apple and berry hydration blend formulated without artificial sugars or colorings.',
-      imageColor: '#FEE2E2',
-      rating: 4.8
-    }
-  ]);
+const mapBackendToProductItem = (p: BackendProductItem): ProductItem => {
+  let uiStatus: 'Active' | 'Suspended' | 'Out of Stock' = 'Active';
+  if (p.status === 'SUSPENDED') uiStatus = 'Suspended';
+  else if (p.status === 'OUT_OF_STOCK' || p.stock === 0) uiStatus = 'Out of Stock';
+
+  return {
+    id: p.id,
+    sku: p.sku || `AGRO-${p.id.slice(0, 6).toUpperCase()}`,
+    title: p.name,
+    category: p.category || 'General Agriculture',
+    price: Number(p.price) || 0,
+    compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+    stock: Number(p.stock) || 0,
+    vendor: p.vendor?.businessName || (p.vendorId ? `Vendor #${p.vendorId.slice(0, 6)}` : 'Platform Admin'),
+    status: uiStatus,
+    summary: p.summary || '',
+    description: p.description || p.summary || 'Quality certified agricultural merchandise.',
+    highlights: Array.isArray(p.highlights) ? p.highlights : [],
+    badges: Array.isArray(p.badges) ? p.badges : [],
+    specifications: p.specifications || null,
+    imageColor: '#E0F7FA',
+    thumbnail: p.thumbnail || p.images?.[0] || null,
+    images: p.images || [],
+    rating: 4.9,
+  };
+};
+
+export const AdminProduct: React.FC = () => {
+  const navigate = useNavigate();
 
   // Search & Filter States
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
+
+  // Debounce search input (250ms) to avoid spamming the backend
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 8;
+
+  // Background prefetching hook for zero-latency pagination
+  const prefetchProducts = useProductsPrefetch('getProducts');
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, selectedCategory, selectedStatus]);
+
+  // Map UI status filter to backend ProductStatus
+  const backendStatusFilter = useMemo(() => {
+    if (selectedStatus === 'Active') return 'ACTIVE';
+    if (selectedStatus === 'Suspended') return 'SUSPENDED';
+    if (selectedStatus === 'Out of Stock') return 'OUT_OF_STOCK';
+    return undefined;
+  }, [selectedStatus]);
+
+  // Query Backend API (GET /products) with active pagination & filters
+  const queryParams = useMemo(() => ({
+    page: currentPage,
+    limit: itemsPerPage,
+    search: debouncedSearch.trim() || undefined,
+    category: selectedCategory !== 'All' ? selectedCategory : undefined,
+    status: backendStatusFilter,
+  }), [currentPage, itemsPerPage, debouncedSearch, selectedCategory, backendStatusFilter]);
+
+  const {
+    data: apiResponse,
+    isLoading,
+    isFetching,
+  } = useGetProductsQuery(queryParams);
+
+  // Background metric overview query (unfiltered) to show global store metrics
+  const { data: metricsResponse } = useGetProductsQuery({ limit: 500 });
+
+  // Mutations
+  const [updateProductStatus] = useUpdateProductStatusMutation();
+  const [deleteProduct] = useDeleteProductMutation();
+
+  // Notification / Alert State
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // Modal States
   const [viewingProduct, setViewingProduct] = useState<ProductItem | null>(null);
@@ -354,110 +137,138 @@ export const AdminProduct = () => {
   const [productToSuspend, setProductToSuspend] = useState<ProductItem | null>(null);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
 
-  // New product form
+  // Fallback new product form for quick modal if used
   const [newProductForm, setNewProductForm] = useState({
     title: '',
     sku: '',
-    category: 'Baby Care' as ProductItem['category'],
+    category: 'Seeds & Seedlings',
     price: '',
     stock: '',
-    vendor: 'PureBotanica Organics',
+    vendor: 'Krisikunjo Verified',
     description: ''
   });
 
-  // Calculate Metrics
-  const totalCount = products.length;
-  const activeCount = products.filter(p => p.status === 'Active').length;
-  const outOfStockCount = products.filter(p => p.stock === 0 || p.status === 'Out of Stock').length;
-  const suspendedCount = products.filter(p => p.status === 'Suspended').length;
+  // Derived Products List from Database Response
+  const currentProducts = useMemo(() => {
+    const rawList = apiResponse?.data?.products || [];
+    return rawList.map(mapBackendToProductItem);
+  }, [apiResponse]);
 
-  // Categories list
-  const categoryOptions = ['All', 'Baby Care', 'Nursery', 'Nutrition', 'Safety', 'Toys', 'Feeding'];
-
-  // Filtered Products
-  const filteredProducts = products.filter((p) => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = p.title.toLowerCase().includes(term) ||
-                          p.sku.toLowerCase().includes(term) ||
-                          p.vendor.toLowerCase().includes(term);
-    const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
-    const matchesStatus = selectedStatus === 'All' || p.status === selectedStatus;
-
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
-
-  // Pagination calculation
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
+  const totalFiltered = apiResponse?.data?.meta?.total ?? 0;
+  const totalPages = apiResponse?.data?.meta?.totalPages ?? 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
+  // Prefetch adjacent pages in background
+  useEffect(() => {
+    if (currentPage < totalPages) {
+      prefetchProducts({ ...queryParams, page: currentPage + 1 });
+    }
+    if (currentPage > 1) {
+      prefetchProducts({ ...queryParams, page: currentPage - 1 });
+    }
+  }, [currentPage, totalPages, queryParams, prefetchProducts]);
+
+  // Global Metric Counts (from Database)
+  const allProducts = metricsResponse?.data?.products || [];
+  const totalCount = metricsResponse?.data?.meta?.total ?? allProducts.length;
+  const activeCount = allProducts.filter((p) => p.status === 'ACTIVE' && p.stock > 0).length;
+  const outOfStockCount = allProducts.filter((p) => p.stock === 0 || p.status === 'OUT_OF_STOCK').length;
+  const suspendedCount = allProducts.filter((p) => p.status === 'SUSPENDED').length;
+
+  // Distinct category options from Database + defaults
+  const categoryOptions = useMemo(() => {
+    const defaultCategories = [
+      'All',
+      'Seeds & Seedlings',
+      'Vegetables',
+      'Plants & Seedlings',
+      'Fertilizers',
+      'Farm Tools',
+      'Agro Chemicals',
+    ];
+    const fromDb = allProducts.map((p) => p.category).filter(Boolean);
+    const combined = Array.from(new Set([...defaultCategories, ...fromDb]));
+    return combined.slice(0, 8);
+  }, [allProducts]);
 
   // Actions
-  const handleToggleSuspend = (product: ProductItem) => {
-    const nextStatus = product.status === 'Suspended' ? 'Active' : 'Suspended';
-    setProducts(products.map(p => p.id === product.id ? { ...p, status: nextStatus } : p));
-    setProductToSuspend(null);
+  const handleToggleSuspend = async (product: ProductItem) => {
+    const nextStatus = product.status === 'Suspended' ? 'ACTIVE' : 'SUSPENDED';
+    try {
+      await updateProductStatus({ id: product.id, status: nextStatus }).unwrap();
+      showToast(`Product ${nextStatus === 'ACTIVE' ? 'reactivated' : 'suspended'} successfully.`);
+    } catch (err: any) {
+      console.error('Failed to update product status:', err);
+      showToast(err?.data?.message || 'Failed to update status', 'error');
+    } finally {
+      setProductToSuspend(null);
+    }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!productToDelete) return;
-    setProducts(products.filter(p => p.id !== productToDelete.id));
-    setProductToDelete(null);
+    try {
+      await deleteProduct(productToDelete.id).unwrap();
+      showToast('Product removed from database successfully.');
+    } catch (err: any) {
+      console.error('Failed to delete product:', err);
+      showToast(err?.data?.message || 'Failed to delete product from database', 'error');
+    } finally {
+      setProductToDelete(null);
+    }
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
-    setProducts(products.map(p => p.id === editingProduct.id ? editingProduct : p));
+    // Navigate directly to the full edit page for full multimedia and spec editing
+    navigate(`/admin/product/edit/${editingProduct.id}`);
     setEditingProduct(null);
   };
 
   const handleCreateProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProductForm.title.trim()) return;
-
-    const newProd: ProductItem = {
-      id: 'PRD-' + (products.length + 1).toString().padStart(2, '0'),
-      sku: newProductForm.sku || `ALU-${Date.now().toString().slice(-4)}`,
-      title: newProductForm.title,
-      category: newProductForm.category,
-      price: parseFloat(newProductForm.price) || 29.99,
-      stock: parseInt(newProductForm.stock) || 10,
-      vendor: newProductForm.vendor,
-      status: parseInt(newProductForm.stock) === 0 ? 'Out of Stock' : 'Active',
-      description: newProductForm.description || 'Quality certified merchandise for family wellness.',
-      imageColor: '#E0F7FA',
-      rating: 5.0
-    };
-
-    setProducts([newProd, ...products]);
     setShowAddProductModal(false);
-    setNewProductForm({
-      title: '',
-      sku: '',
-      category: 'Baby Care',
-      price: '',
-      stock: '',
-      vendor: 'PureBotanica Organics',
-      description: ''
-    });
+    navigate('/admin/product/add');
   };
 
   return (
-    <div className="flex flex-col gap-6 font-['Inter'] pb-16">
+    <div className="w-full max-w-full flex flex-col gap-6 font-['Inter'] pb-16 animate-in fade-in duration-200">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className={`fixed top-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-200 border ${
+          toastMessage.type === 'success'
+            ? 'bg-[#062E35] text-white border-teal-500/30'
+            : 'bg-rose-900 text-white border-rose-500/30'
+        }`}>
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-rose-300 shrink-0" />
+          )}
+          <span className="text-xs font-semibold">{toastMessage.text}</span>
+        </div>
+      )}
+
       {/* 1. Header Section */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">
-            Products
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">
+              Products Catalog
+            </h1>
+            {isFetching && (
+              <RefreshCw className="w-4 h-4 text-slate-400 animate-spin" />
+            )}
+          </div>
           <p className="text-sm text-slate-500 mt-1">
-            Manage family care products, marketplace inventory, and vendor catalog.
+            Real-time database inventory, marketplace catalog, and vendor merchandise.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => setShowAddProductModal(true)}
+          onClick={() => navigate('/admin/product/add')}
           className="px-5 py-2.5 rounded-full bg-[#062E35] hover:bg-[#0A434D] text-white text-sm font-semibold flex items-center gap-2 shadow-xs transition-all cursor-pointer active:scale-95"
         >
           <Plus className="w-4 h-4 text-white" strokeWidth={2.4} />
@@ -465,7 +276,7 @@ export const AdminProduct = () => {
         </button>
       </div>
 
-      {/* 2. Top Metric Summary Cards */}
+      {/* 2. Top Metric Summary Cards (Real database counts) */}
       <ProductMetricsGrid
         totalCount={totalCount}
         activeCount={activeCount}
@@ -483,24 +294,33 @@ export const AdminProduct = () => {
         setSelectedStatus={setSelectedStatus}
         categoryOptions={categoryOptions}
         onFilterChange={() => setCurrentPage(1)}
+        placeholder="Search database products by title, SKU, or vendor..."
       />
 
       {/* 4. Products Table Container & Pagination */}
-      <ProductTable
-        products={currentProducts}
-        startIndex={startIndex}
-        itemsPerPage={itemsPerPage}
-        totalFiltered={filteredProducts.length}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        setCurrentPage={setCurrentPage}
-        onView={(p) => setViewingProduct(p)}
-        onEdit={(p) => setEditingProduct(p)}
-        onSuspend={(p) => setProductToSuspend(p)}
-        onDelete={(p) => setProductToDelete(p)}
-      />
+      {isLoading ? (
+        <div className="w-full min-h-[300px] bg-white rounded-2xl border border-slate-200/80 p-12 flex flex-col items-center justify-center gap-3">
+          <div className="w-9 h-9 border-3 border-[#062E35] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-semibold text-slate-500">Loading products from database...</span>
+        </div>
+      ) : (
+        <ProductTable
+          products={currentProducts}
+          startIndex={startIndex}
+          itemsPerPage={itemsPerPage}
+          totalFiltered={totalFiltered}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+          onView={(p) => setViewingProduct(p)}
+          onEdit={(p) => navigate(`/admin/product/edit/${p.id}`)}
+          onSuspend={(p) => setProductToSuspend(p)}
+          onDelete={(p) => setProductToDelete(p)}
+          showVendorColumn={true}
+        />
+      )}
 
-      {/* 5. Modals (View, Edit, Suspend, Delete, Add) */}
+      {/* 5. Modals (View, Edit, Suspend, Delete) */}
       <ProductModals
         viewingProduct={viewingProduct}
         setViewingProduct={setViewingProduct}
@@ -519,7 +339,10 @@ export const AdminProduct = () => {
         setNewProductForm={setNewProductForm}
         handleCreateProduct={handleCreateProduct}
         categoryOptions={categoryOptions}
+        onEditDirect={(p) => navigate(`/admin/product/edit/${p.id}`)}
       />
     </div>
   );
 };
+
+export default AdminProduct;

@@ -1,19 +1,31 @@
 import React from 'react';
-import { Package, CheckCircle2, AlertCircle, Ban, TrendingUp } from 'lucide-react';
+import { Package, CheckCircle2, AlertCircle, Ban, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface ProductMetricsGridProps {
   totalCount: number;
   activeCount: number;
   outOfStockCount: number;
   suspendedCount: number;
+  growthText?: string;
+  isPositive?: boolean;
 }
 
 export const ProductMetricsGrid: React.FC<ProductMetricsGridProps> = ({
   totalCount,
   activeCount,
   outOfStockCount,
-  suspendedCount
+  suspendedCount,
+  growthText,
+  isPositive = true,
 }) => {
+  const displayGrowth =
+    growthText ??
+    (totalCount === 0
+      ? '+0% from last month'
+      : totalCount === 1
+      ? '+1 new item this month'
+      : `+${totalCount} active items`);
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Total Products */}
@@ -27,9 +39,13 @@ export const ProductMetricsGrid: React.FC<ProductMetricsGridProps> = ({
         <div className="text-3xl font-bold text-slate-900 tracking-tight mt-2">
           {totalCount}
         </div>
-        <div className="flex items-center gap-1 text-[#16A34A] text-xs font-semibold mt-2">
-          <TrendingUp className="w-3.5 h-3.5" />
-          <span>+12% from last month</span>
+        <div className="flex items-center gap-1 text-xs font-semibold mt-2 text-[#16A34A]">
+          {isPositive ? (
+            <TrendingUp className="w-3.5 h-3.5" />
+          ) : (
+            <TrendingDown className="w-3.5 h-3.5" />
+          )}
+          <span>{displayGrowth}</span>
         </div>
       </div>
 

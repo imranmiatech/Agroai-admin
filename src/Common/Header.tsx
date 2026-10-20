@@ -57,12 +57,21 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* User Avatar */}
-        <div 
-          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#062E35] text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm cursor-pointer select-none shrink-0"
-          title={user ? `${user.name} (${user.role})` : 'User'}
-        >
-          {user?.name ? user.name.charAt(0).toUpperCase() : (user?.role === 'VENDOR' ? 'V' : 'A')}
-        </div>
+        {user?.avatar ? (
+          <img
+            src={user.avatar}
+            alt={user.name || 'User'}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-slate-200 shadow-sm cursor-pointer select-none shrink-0"
+            title={user ? `${user.name} (${user.role})` : 'User'}
+          />
+        ) : (
+          <div 
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#062E35] text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm cursor-pointer select-none shrink-0"
+            title={user ? `${user.name} (${user.role})` : 'User'}
+          >
+            {user?.name ? user.name.charAt(0).toUpperCase() : (user?.role === 'VENDOR' ? 'V' : 'A')}
+          </div>
+        )}
       </div>
     </header>
   );

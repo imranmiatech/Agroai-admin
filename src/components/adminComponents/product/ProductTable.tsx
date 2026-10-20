@@ -14,6 +14,7 @@ interface ProductTableProps {
   onEdit: (product: ProductItem) => void;
   onSuspend: (product: ProductItem) => void;
   onDelete: (product: ProductItem) => void;
+  showVendorColumn?: boolean;
 }
 
 export const ProductTable: React.FC<ProductTableProps> = ({
@@ -27,7 +28,8 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onView,
   onEdit,
   onSuspend,
-  onDelete
+  onDelete,
+  showVendorColumn = true,
 }) => {
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
@@ -39,7 +41,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
               <th className="py-4 px-6">Category</th>
               <th className="py-4 px-6">Price</th>
               <th className="py-4 px-6">Stock</th>
-              <th className="py-4 px-6">Vendor</th>
+              {showVendorColumn && <th className="py-4 px-6">Vendor</th>}
               <th className="py-4 px-6">Status</th>
               <th className="py-4 px-6 text-right">Actions</th>
             </tr>
@@ -47,7 +49,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           <tbody className="divide-y divide-slate-100 text-sm">
             {products.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-slate-400 text-xs">
+                <td colSpan={showVendorColumn ? 7 : 6} className="py-12 text-center text-slate-400 text-xs">
                   No products found matching your filter criteria.
                 </td>
               </tr>
@@ -60,12 +62,20 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   {/* Product Name & SKU */}
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs text-[#062E35]"
-                        style={{ backgroundColor: product.imageColor }}
-                      >
-                        <Package className="w-5 h-5 opacity-90" />
-                      </div>
+                      {product.thumbnail ? (
+                        <img 
+                          src={product.thumbnail} 
+                          alt={product.title} 
+                          className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-200/80 shadow-2xs" 
+                        />
+                      ) : (
+                        <div 
+                          className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs text-[#062E35]"
+                          style={{ backgroundColor: product.imageColor || '#E0F7FA' }}
+                        >
+                          <Package className="w-5 h-5 opacity-90" />
+                        </div>
+                      )}
                       <div className="flex flex-col min-w-0 max-w-xs sm:max-w-sm">
                         <span 
                           onClick={() => onView(product)}
@@ -90,7 +100,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
 
                   {/* Price */}
                   <td className="py-4 px-6 font-bold text-slate-900 text-sm">
-                    €{product.price.toFixed(2)}
+                    ৳{product.price.toFixed(2)}
                   </td>
 
                   {/* Stock status with indicator dot */}
@@ -114,12 +124,14 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   </td>
 
                   {/* Vendor */}
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
-                      <Store className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{product.vendor}</span>
-                    </div>
-                  </td>
+                  {showVendorColumn && (
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                        <Store className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{product.vendor}</span>
+                      </div>
+                    </td>
+                  )}
 
                   {/* Status Pill */}
                   <td className="py-4 px-6">

@@ -167,32 +167,6 @@ export const PartnersOverviewView: React.FC<PartnersOverviewViewProps> = ({
               </div>
             </div>
           </div>
-
-          <div className="bg-[#FFFDF5] border border-[#FEF0C7] rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-white/80 text-[#F59E0B] flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900 leading-tight">
-                  3 offers are pending admin approval before going live
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#FFFDF5] border border-[#FEF0C7] rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-white/80 text-[#F59E0B] flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-4 h-4 text-[#F59E0B]" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900 leading-tight">
-                  2 active offers expire within the next 7 days
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { 
   BarChart2, 
-  UserPlus, 
-  Plus
+  UserPlus 
 } from 'lucide-react';
 import { 
   PartnershipRequestsTable, 
@@ -16,7 +15,7 @@ export interface CategoryItem {
   color: string;
 }
 
-export type RequestStatus = 'Contacted' | 'In discussion' | 'new' | 'declined';
+export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 
 export interface PartnershipRequest {
   id: string;
@@ -37,15 +36,7 @@ export const VendorsPage = () => {
   // Detail Modal state for selected request
   const [selectedRequest, setSelectedRequest] = useState<PartnershipRequest | null>(null);
 
-  // Modal states for Create Offer
-  const [showCreateOfferModal, setShowCreateOfferModal] = useState(false);
-  const [newOffer, setNewOffer] = useState({
-    title: '',
-    partnerName: '',
-    category: 'Supermarket',
-    discount: '15%',
-    expiresIn: '30 days'
-  });
+
 
   // Division breakdown data for Partners by Division
   const categories: CategoryItem[] = [
@@ -69,7 +60,7 @@ export const VendorsPage = () => {
       ownerName: 'Clara Gallagher',
       email: 'clara@safesleepireland.ie',
       phone: '+353 87 123 4567',
-      status: 'Contacted',
+      status: 'APPROVED',
       submittedDate: 'Jul 6, 2025'
     },
     {
@@ -80,7 +71,7 @@ export const VendorsPage = () => {
       ownerName: 'Liam O’Sullivan',
       email: 'liam@greenvalley.com',
       phone: '+353 89 234 5678',
-      status: 'In discussion',
+      status: 'PENDING',
       submittedDate: 'Jul 6, 2025'
     },
     {
@@ -91,7 +82,7 @@ export const VendorsPage = () => {
       ownerName: 'Aoife Kelly',
       email: 'aoife@coastalmarine.com',
       phone: '+353 86 345 6789',
-      status: 'Contacted',
+      status: 'APPROVED',
       submittedDate: 'Jul 6, 2025'
     },
     {
@@ -102,7 +93,7 @@ export const VendorsPage = () => {
       ownerName: 'Sean Murphy',
       email: 'sean@rajshahiproduce.com',
       phone: '+353 85 456 7890',
-      status: 'new',
+      status: 'PENDING',
       submittedDate: 'Jul 6, 2025'
     },
     {
@@ -113,7 +104,7 @@ export const VendorsPage = () => {
       ownerName: 'Niamh Byrne',
       email: 'niamh@sylhetvalleytea.com',
       phone: '+353 87 567 8901',
-      status: 'declined',
+      status: 'REJECTED',
       submittedDate: 'Jul 6, 2025'
     },
     {
@@ -124,7 +115,7 @@ export const VendorsPage = () => {
       ownerName: 'Conor Walsh',
       email: 'conor.walsh@khulnaagro.com',
       phone: '+353 89 678 9012',
-      status: 'Contacted',
+      status: 'SUSPENDED',
       submittedDate: 'Jul 5, 2025'
     },
     {
@@ -135,7 +126,7 @@ export const VendorsPage = () => {
       ownerName: 'Sinead Dunne',
       email: 'sinead@barishalproduce.com',
       phone: '+353 86 789 0123',
-      status: 'new',
+      status: 'PENDING',
       submittedDate: 'Jul 4, 2025'
     },
     {
@@ -146,7 +137,7 @@ export const VendorsPage = () => {
       ownerName: 'Patrick O’Donnell',
       email: 'patrick@rangpurstorage.com',
       phone: '+353 85 890 1234',
-      status: 'In discussion',
+      status: 'APPROVED',
       submittedDate: 'Jul 3, 2025'
     }
   ]);
@@ -159,41 +150,18 @@ export const VendorsPage = () => {
     }
   };
 
-  // Create offer handler
-  const handleCreateOffer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newOffer.title || !newOffer.partnerName) return;
-    setShowCreateOfferModal(false);
-    setNewOffer({
-      title: '',
-      partnerName: '',
-      category: 'Supermarket',
-      discount: '15%',
-      expiresIn: '30 days'
-    });
-  };
-
   return (
     <div className="flex flex-col gap-6 font-['Inter'] pb-16">
-      {/* 1. Page Header (Partners Title, Subtitle & "+ Create Offer" Button) */}
+      {/* 1. Page Header (Partners Title & Subtitle) */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">
             Partners
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage partner businesses, offers, and partnership requests across the Krisikunjo platform.
+            Manage partner businesses and partnership requests across the Krisikunjo platform.
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setShowCreateOfferModal(true)}
-          className="px-5 py-2.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-sm font-semibold flex items-center gap-2 shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95"
-        >
-          <Plus className="w-4 h-4 text-slate-800" strokeWidth={2.4} />
-          <span>Create Offer</span>
-        </button>
       </div>
 
       {/* 2. Top Tab Navigation Capsule (Only Overview & Partnership Requests) */}
@@ -247,12 +215,6 @@ export const VendorsPage = () => {
         selectedRequest={selectedRequest}
         setSelectedRequest={setSelectedRequest}
         handleUpdateStatus={handleUpdateStatus}
-        showCreateOfferModal={showCreateOfferModal}
-        setShowCreateOfferModal={setShowCreateOfferModal}
-        newOffer={newOffer}
-        setNewOffer={setNewOffer}
-        handleCreateOffer={handleCreateOffer}
-        categories={categories}
       />
     </div>
   );

@@ -13,7 +13,6 @@ import {
   ShieldCheck, 
   ShoppingBag, 
   Package, 
-  Tag, 
   LifeBuoy,
   X
 } from 'lucide-react';
@@ -61,7 +60,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'overview', label: 'Overview', icon: <LayoutGrid className="w-5 h-5 shrink-0" /> },
     { id: 'product', label: 'Products', icon: <Package className="w-5 h-5 shrink-0" /> },
     { id: 'orders', label: 'Orders', icon: <ShoppingCart className="w-5 h-5 shrink-0" /> },
-    { id: 'offers', label: 'Offers', icon: <Tag className="w-5 h-5 shrink-0" /> },
     { id: 'support', label: 'Support', icon: <LifeBuoy className="w-5 h-5 shrink-0" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5 shrink-0" /> }
   ];

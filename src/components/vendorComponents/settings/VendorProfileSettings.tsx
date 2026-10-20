@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Camera, CheckCircle2, Store, Lock, Shield } from 'lucide-react';
+import { Camera, CheckCircle2, AlertCircle, Store, Lock, Shield } from 'lucide-react';
 
 interface VendorProfileSettingsProps {
   storeName: string;
@@ -14,6 +14,9 @@ interface VendorProfileSettingsProps {
   setAvatarImage: (img: string | null) => void;
   profileSuccess: boolean;
   onSaveProfile: (e: React.FormEvent) => void;
+  isSaving?: boolean;
+  profileError?: string;
+  onFileSelected?: (file: File) => void;
 }
 
 export const VendorProfileSettings: React.FC<VendorProfileSettingsProps> = ({
@@ -29,6 +32,9 @@ export const VendorProfileSettings: React.FC<VendorProfileSettingsProps> = ({
   setAvatarImage,
   profileSuccess,
   onSaveProfile,
+  isSaving = false,
+  profileError,
+  onFileSelected,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,6 +47,7 @@ export const VendorProfileSettings: React.FC<VendorProfileSettingsProps> = ({
     if (file) {
       const url = URL.createObjectURL(file);
       setAvatarImage(url);
+      onFileSelected?.(file);
     }
   };
 
@@ -75,6 +82,13 @@ export const VendorProfileSettings: React.FC<VendorProfileSettingsProps> = ({
           <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>Store profile details saved successfully!</span>
+          </div>
+        )}
+
+        {profileError && (
+          <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{profileError}</span>
           </div>
         )}
 
@@ -189,9 +203,17 @@ export const VendorProfileSettings: React.FC<VendorProfileSettingsProps> = ({
         <button
           type="submit"
           form="vendor-profile-form"
-          className="px-6 py-2.5 rounded-xl bg-[#062E35] hover:bg-[#0A434D] text-white text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-98"
+          disabled={isSaving}
+          className="px-6 py-2.5 rounded-xl bg-[#062E35] hover:bg-[#0A434D] text-white text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          Save Store Profile
+          {isSaving ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span>Saving...</span>
+            </>
+          ) : (
+            <span>Save Store Profile</span>
+          )}
         </button>
       </div>
     </div>

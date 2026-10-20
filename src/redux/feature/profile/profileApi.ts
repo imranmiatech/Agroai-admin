@@ -1,18 +1,23 @@
 import { baseApi } from '../../baseApi/baseApi';
-import type { UpdateProfilePayload, VendorProfile } from './profileType';
+import type {
+  UpdateProfilePayload,
+  UserProfileResponse,
+  ChangePasswordPayload,
+  ChangePasswordResponse,
+} from './profileType';
 
 export const profileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getProfile: builder.query<{ success: boolean; data: VendorProfile }, void>({
+    getProfile: builder.query<UserProfileResponse, void>({
       query: () => ({
         url: '/profile',
         method: 'GET',
       }),
-      providesTags: ['Profile'],
+      providesTags: ['Profile', 'User'],
     }),
 
     updateProfile: builder.mutation<
-      { success: boolean; data: VendorProfile },
+      UserProfileResponse,
       UpdateProfilePayload | FormData
     >({
       query: (body) => ({
@@ -22,8 +27,23 @@ export const profileApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Profile', 'User'],
     }),
+
+    changePassword: builder.mutation<
+      ChangePasswordResponse,
+      ChangePasswordPayload
+    >({
+      query: (body) => ({
+        url: '/profile/change-password',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetProfileQuery, useUpdateProfileMutation } = profileApi;
+export const {
+  useGetProfileQuery,
+  useUpdateProfileMutation,
+  useChangePasswordMutation,
+} = profileApi;

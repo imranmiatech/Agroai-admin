@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { CreditCard, ShieldCheck, CheckCircle2, Lock, Trash2, Plus } from 'lucide-react';
-
-export interface SavedCard {
-  id: string;
-  cardholderName: string;
-  cardNumber: string; // masked, e.g. '•••• •••• •••• 4242'
-  rawLast4: string;
-  expiry: string;
-  cardType: 'Visa' | 'Mastercard' | 'Amex';
-  isDefault: boolean;
-}
+import { CreditCard, ShieldCheck, CheckCircle2, Lock, Trash2, Plus, Loader2 } from 'lucide-react';
+import {
+  useGetSavedCardsQuery,
+  useSaveCardMutation,
+  useSetDefaultCardMutation,
+  useDeleteCardMutation,
+} from '../../../redux';
 
 export const AdminBillingCardSettings: React.FC = () => {
+  // RTK Query Hooks
+  const { data: cardsResponse, isLoading: isLoadingCards } = useGetSavedCardsQuery();
+  const [saveCard, { isLoading: isSaving }] = useSaveCardMutation();
+  const [setDefaultCard, { isLoading: isSettingDefault }] = useSetDefaultCardMutation();
+  const [deleteCard, { isLoading: isDeleting }] = useDeleteCardMutation();
+
+  const savedCards = cardsResponse?.data || [];
+
   // Form State
   const [cardholderName, setCardholderName] = useState('Aoife Turner');
   const [cardNumber, setCardNumber] = useState('4242 •••• •••• 8892');
@@ -21,36 +25,15 @@ export const AdminBillingCardSettings: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Saved Cards List
-  const [savedCards, setSavedCards] = useState<SavedCard[]>([
-    {
-      id: 'card-1',
-      cardholderName: 'Aoife Turner',
-      cardNumber: '•••• •••• •••• 8892',
-      rawLast4: '8892',
-      expiry: '08/29',
-      cardType: 'Visa',
-      isDefault: true
-    },
-    {
-      id: 'card-2',
-      cardholderName: 'Krisikunjo Enterprise Corp',
-      cardNumber: '•••• •••• •••• 3019',
-      rawLast4: '3019',
-      expiry: '11/27',
-      cardType: 'Mastercard',
-      isDefault: false
-    }
-  ]);
-
-  // Card formatting
+  // Format Card Number
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length > 16) value = value.slice(0, 16);
-    const formatted = value.replace(/(\d{4})/g, '$1 ').trim();
+    const formatted = value.replace(/(\d{4})/g, ' ').trim();
     setCardNumber(formatted);
   };
 
+  // Format Expiry MM/YY
   const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length > 4) value = value.slice(0, 4);
@@ -60,6 +43,7 @@ export const AdminBillingCardSettings: React.FC = () => {
     setExpiry(value);
   };
 
+  // Format CVV
   const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 4);
     setCvv(value);
@@ -72,7 +56,8 @@ export const AdminBillingCardSettings: React.FC = () => {
     return 'Visa';
   };
 
-  const handleSaveCard = (e: React.FormEvent) => {
+  // Save Card Handler
+  const handleSaveCard = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -80,9 +65,10 @@ export const AdminBillingCardSettings: React.FC = () => {
       setErrorMsg('Please enter the name on card.');
       return;
     }
+
     const cleanNum = cardNumber.replace(/\D/g, '');
-    if (cleanNum.length < 12 && !cardNumber.includes('•')) {
-      setErrorMsg('Please enter a valid card number.');
+    if (cleanNum.length < 12 && !cardNumber.includes('••')) {
+      setErrorMsg('Please enter a valid 16-digit card number.');
       return;
     }
     if (expiry.length < 5) {
@@ -94,36 +80,48 @@ export const AdminBillingCardSettings: React.FC = () => {
       return;
     }
 
-    const last4 = cleanNum.length >= 4 ? cleanNum.slice(-4) : '8892';
-    const cardType = detectCardType(cardNumber);
+    try {
+      await saveCard({
+        cardholderName: cardholderName.trim(),
+        cardNumber: cleanNum.length >= 12 ? cleanNum : '4242424242428892',
+        expiry,
+        cvv,
+        isDefault: setAsDefault,
+      }).unwrap();
 
-    const newCard: SavedCard = {
-      id: `card-${Date.now()}`,
-      cardholderName,
-      cardNumber: `•••• •••• •••• ${last4}`,
-      rawLast4: last4,
-      expiry,
-      cardType,
-      isDefault: setAsDefault
-    };
-
-    if (setAsDefault) {
-      setSavedCards(savedCards.map(c => ({ ...c, isDefault: false })).concat(newCard));
-    } else {
-      setSavedCards([newCard, ...savedCards]);
+      setSuccessMsg(true);
+      setTimeout(() => setSuccessMsg(false), 3500);
+      setCardNumber('');
+      setExpiry('');
+      setCvv('');
+    } catch (err: any) {
+      setErrorMsg(err?.data?.message || 'Failed to save card. Please check details.');
     }
-
-    setSuccessMsg(true);
-    setTimeout(() => setSuccessMsg(false), 3500);
   };
 
-  const handleRemoveCard = (id: string) => {
-    setSavedCards(savedCards.filter(c => c.id !== id));
+  // Set Default Handler
+  const handleSetDefault = async (id: string) => {
+    try {
+      await setDefaultCard(id).unwrap();
+    } catch (err: any) {
+      setErrorMsg(err?.data?.message || 'Failed to update default card.');
+    }
   };
 
-  const handleSetDefault = (id: string) => {
-    setSavedCards(savedCards.map(c => ({ ...c, isDefault: c.id === id })));
+  // Remove Card Handler
+  const handleRemoveCard = async (id: string) => {
+    try {
+      await deleteCard(id).unwrap();
+    } catch (err: any) {
+      setErrorMsg(err?.data?.message || 'Failed to remove card.');
+    }
   };
+
+  // Active Card for Preview: either user inputs or the default/first saved card
+  const previewCardNumber = cardNumber || (savedCards[0] ? savedCards[0].cardNumber : '•••• •••• •••• ••••');
+  const previewName = cardholderName || (savedCards[0] ? savedCards[0].cardholderName : 'Aoife Turner');
+  const previewExpiry = expiry || (savedCards[0] ? savedCards[0].expiry : 'MM/YY');
+  const previewType = detectCardType(previewCardNumber);
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -168,14 +166,14 @@ export const AdminBillingCardSettings: React.FC = () => {
 
               {/* Card Network Tag */}
               <div className="font-extrabold tracking-wider text-xs sm:text-sm uppercase bg-white/15 px-3 py-1 rounded-lg backdrop-blur-xs border border-white/20">
-                {detectCardType(cardNumber)}
+                {previewType}
               </div>
             </div>
 
             {/* Middle: Card Number */}
             <div className="relative z-10 my-auto">
               <span className="font-mono text-lg sm:text-2xl font-bold tracking-[0.18em] drop-shadow-sm">
-                {cardNumber || '•••• •••• •••• ••••'}
+                {previewCardNumber}
               </span>
             </div>
 
@@ -186,7 +184,7 @@ export const AdminBillingCardSettings: React.FC = () => {
                   Cardholder Name
                 </div>
                 <div className="font-semibold text-sm tracking-wide uppercase mt-0.5 max-w-[190px] truncate">
-                  {cardholderName || 'Aoife Turner'}
+                  {previewName}
                 </div>
               </div>
 
@@ -195,71 +193,89 @@ export const AdminBillingCardSettings: React.FC = () => {
                   Expires
                 </div>
                 <div className="font-mono font-semibold text-sm mt-0.5">
-                  {expiry || 'MM/YY'}
+                  {previewExpiry}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Saved Cards List */}
+          {/* Saved Payment Methods List */}
           <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs flex flex-col gap-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-sm text-slate-900">Saved Payment Methods</h3>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-sm text-slate-800">Saved Payment Methods</h3>
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                {savedCards.length} Cards
+                {savedCards.length} {savedCards.length === 1 ? 'Card' : 'Cards'}
               </span>
             </div>
 
             <div className="flex flex-col gap-2.5">
-              {savedCards.map((c) => (
-                <div
-                  key={c.id}
-                  className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
-                    c.isDefault ? 'border-[#0E4F5A] bg-[#0E4F5A]/5' : 'border-slate-200 hover:border-slate-300 bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 shrink-0">
-                      <CreditCard className="w-5 h-5 text-[#0E4F5A]" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-900">
-                          {c.cardType} •••• {c.rawLast4}
-                        </span>
-                        {c.isDefault && (
-                          <span className="bg-teal-100 text-teal-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            Default
+              {isLoadingCards ? (
+                <div className="flex items-center justify-center py-6 text-slate-400 gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
+                  <span className="text-xs">Loading cards...</span>
+                </div>
+              ) : savedCards.length === 0 ? (
+                <div className="text-center py-6 text-xs text-slate-400">
+                  No saved payment cards yet. Add your card on the right.
+                </div>
+              ) : (
+                savedCards.map((c) => (
+                  <div
+                    key={c.id}
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                      c.isDefault ? 'border-[#0E4F5A] bg-[#0E4F5A]/5' : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                    onClick={() => {
+                      setCardholderName(c.cardholderName);
+                      setCardNumber(c.cardNumber);
+                      setExpiry(c.expiry);
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-7 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-600 shrink-0">
+                        <CreditCard className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-800">
+                            {c.cardType} •••• {c.rawLast4}
                           </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
-                        Expires {c.expiry} • {c.cardholderName}
+                          {c.isDefault && (
+                            <span className="bg-teal-100 text-teal-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Expires {c.expiry} • {c.cardholderName}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-1.5">
-                    {!c.isDefault && (
+                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      {!c.isDefault && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetDefault(c.id)}
+                          disabled={isSettingDefault}
+                          className="text-xs text-[#0E4F5A] hover:underline font-semibold px-2 py-1 cursor-pointer disabled:opacity-50"
+                        >
+                          Set Default
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={() => handleSetDefault(c.id)}
-                        className="text-xs text-[#0E4F5A] hover:underline font-semibold px-2 py-1 cursor-pointer"
+                        onClick={() => handleRemoveCard(c.id)}
+                        disabled={isDeleting}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-50"
+                        title="Remove card"
                       >
-                        Set Default
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCard(c.id)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                      title="Remove card"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -383,10 +399,20 @@ export const AdminBillingCardSettings: React.FC = () => {
             <div className="flex justify-end pt-3 mt-2 border-t border-slate-100">
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-xl bg-[#062E35] hover:bg-[#0A434D] text-white text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-98 flex items-center gap-2"
+                disabled={isSaving}
+                className="px-6 py-2.5 rounded-xl bg-[#062E35] hover:bg-[#0A434D] text-white text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-98 flex items-center gap-2 disabled:opacity-50"
               >
-                <Plus className="w-4 h-4" />
-                <span>Save Card Details</span>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span>Save Card Details</span>
+                  </>
+                )}
               </button>
             </div>
           </form>

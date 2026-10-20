@@ -9,12 +9,14 @@ interface UserActionModalProps {
   } | null;
   onClose: () => void;
   onConfirm: () => void;
+  isLoading?: boolean;
 }
 
 export const UserActionModal: React.FC<UserActionModalProps> = ({
   modalData,
   onClose,
-  onConfirm
+  onConfirm,
+  isLoading = false,
 }) => {
   if (!modalData) return null;
 
@@ -58,7 +60,8 @@ export const UserActionModal: React.FC<UserActionModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3 px-4 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+            disabled={isLoading}
+            className="w-full py-3 px-4 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ borderRadius: '16px' }}
           >
             Cancel
@@ -67,13 +70,25 @@ export const UserActionModal: React.FC<UserActionModalProps> = ({
           <button
             type="button"
             onClick={onConfirm}
-            className="w-full py-3 px-4 rounded-2xl text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer hover:opacity-90 active:scale-95"
+            disabled={isLoading}
+            className="w-full py-3 px-4 rounded-2xl text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             style={{ 
               backgroundColor: '#B42318', 
               borderRadius: '16px' 
             }}
           >
-            {modalData.type === 'suspend' ? 'Suspend' : 'Delete'}
+            {isLoading && (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            )}
+            <span>
+              {isLoading
+                ? modalData.type === 'suspend'
+                  ? 'Suspending...'
+                  : 'Deleting...'
+                : modalData.type === 'suspend'
+                ? 'Suspend'
+                : 'Delete'}
+            </span>
           </button>
         </div>
       </div>

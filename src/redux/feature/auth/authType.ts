@@ -1,4 +1,4 @@
-﻿export interface VendorProfileSummary {
+export interface VendorProfileSummary {
   id: string;
   businessName: string;
   slug?: string;
@@ -14,6 +14,7 @@ export interface User {
   role: 'CUSTOMER' | 'VENDOR' | 'ADMIN';
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   isEmailVerified?: boolean;
+  avatar?: string | null;
   vendorProfile?: VendorProfileSummary;
 }
 

@@ -17,6 +17,7 @@ interface VendorPasswordSettingsProps {
   passwordSuccess: boolean;
   passwordError: string;
   onChangePassword: (e: React.FormEvent) => void;
+  isChanging?: boolean;
 }
 
 export const VendorPasswordSettings: React.FC<VendorPasswordSettingsProps> = ({
@@ -35,6 +36,7 @@ export const VendorPasswordSettings: React.FC<VendorPasswordSettingsProps> = ({
   passwordSuccess,
   passwordError,
   onChangePassword,
+  isChanging = false,
 }) => {
   return (
     <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col justify-between h-full transition-all">
@@ -157,9 +159,17 @@ export const VendorPasswordSettings: React.FC<VendorPasswordSettingsProps> = ({
         <button
           type="submit"
           form="vendor-password-form"
-          className="px-6 py-2.5 rounded-xl bg-[#062E35] hover:bg-[#0A434D] text-white text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-98"
+          disabled={isChanging}
+          className="px-6 py-2.5 rounded-xl bg-[#062E35] hover:bg-[#0A434D] text-white text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          Change Password
+          {isChanging ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span>Updating...</span>
+            </>
+          ) : (
+            <span>Change Password</span>
+          )}
         </button>
       </div>
     </div>

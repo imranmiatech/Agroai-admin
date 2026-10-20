@@ -129,13 +129,13 @@ export const VendorRecentActivity: React.FC = () => {
           </div>
         </div>
 
-        {/* View Offers Button */}
+        {/* View Products Button */}
         <button
           type="button"
-          onClick={() => navigate('/vendor/offers')}
+          onClick={() => navigate('/vendor/product')}
           className="w-full mt-6 py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold transition-all cursor-pointer text-center"
         >
-          View offers
+          View products
         </button>
       </div>
     </div>

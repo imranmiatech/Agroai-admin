@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { X, CheckCircle2, Trash2, Ban } from 'lucide-react';
 import type { UserAccount } from '../../../pages/adminPages/UserManagement';
 
 interface UserDetailsModalProps {
   user: UserAccount | null;
   onClose: () => void;
-  onReactivate: (userId: number) => void;
+  onReactivate: (userId: string | number) => void;
   onOpenActionModal: (type: 'suspend' | 'delete', user: UserAccount) => void;
 }
 
-export const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
+export const UserDetailsModal: React.FC<UserDetailsModalProps> = memo(({
   user,
   onClose,
   onReactivate,
@@ -116,4 +116,8 @@ export const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
       </div>
     </div>
   );
-};
+});
+
+UserDetailsModal.displayName = 'UserDetailsModal';
+
+export default UserDetailsModal;

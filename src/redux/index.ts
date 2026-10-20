@@ -14,3 +14,15 @@ export * from './feature/auth/authApi';
 // Profile Feature
 export * from './feature/profile/profileType';
 export * from './feature/profile/profileApi';
+
+// Users Feature
+export * from './feature/users/usersType';
+export * from './feature/users/usersApi';
+
+// Products Feature
+export * from './feature/products/productsType';
+export * from './feature/products/productsApi';
+
+// Settings Feature
+export * from './feature/settings/settingsType';
+export * from './feature/settings/settingsApi';

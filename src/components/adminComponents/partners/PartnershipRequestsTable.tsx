@@ -136,24 +136,24 @@ export const PartnershipRequestsTable: React.FC<PartnershipRequestsTableProps> =
 
                     {/* Status Capsule */}
                     <td className="py-4 px-6">
-                      {req.status === 'Contacted' && (
+                      {req.status === 'PENDING' && (
+                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#D97706]">
+                          PENDING
+                        </span>
+                      )}
+                      {req.status === 'APPROVED' && (
                         <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[#DCFCE7] text-[#16A34A]">
-                          Contacted
+                          APPROVED
                         </span>
                       )}
-                      {req.status === 'In discussion' && (
-                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[#E0E7FF] text-[#4F46E5]">
-                          In discussion
+                      {req.status === 'REJECTED' && (
+                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[#FEE4E2] text-[#D92D20]">
+                          REJECTED
                         </span>
                       )}
-                      {req.status === 'new' && (
-                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[#E0F2FE] text-[#0284C7] lowercase">
-                          new
-                        </span>
-                      )}
-                      {req.status === 'declined' && (
-                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[#FEE4E2] text-[#D92D20] lowercase">
-                          declined
+                      {req.status === 'SUSPENDED' && (
+                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[#F1F5F9] text-[#475569]">
+                          SUSPENDED
                         </span>
                       )}
                     </td>

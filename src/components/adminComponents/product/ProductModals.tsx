@@ -1,6 +1,318 @@
-import React from 'react';
-import { Package, Edit3, Trash2, Ban, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  Package, 
+  Edit3, 
+  Trash2, 
+  Ban, 
+  X, 
+  Store, 
+  Sparkles, 
+  ShieldCheck, 
+  CheckCircle2 
+} from 'lucide-react';
 import type { ProductItem } from '../../../pages/adminPages/AdminProduct';
+
+interface ProductViewModalContentProps {
+  product: ProductItem;
+  onClose: () => void;
+  onEdit: () => void;
+}
+
+const ProductViewModalContent: React.FC<ProductViewModalContentProps> = ({
+  product,
+  onClose,
+  onEdit,
+}) => {
+  const images = (product.images && product.images.length > 0)
+    ? product.images
+    : (product.thumbnail ? [product.thumbnail] : []);
+  const [selectedImgIdx, setSelectedImgIdx] = useState(0);
+
+  const numericPrice = product.price || 0;
+  const numericComparePrice = product.compareAtPrice || 0;
+  const hasDiscount = numericComparePrice > numericPrice && numericPrice > 0;
+  const discountPercent = hasDiscount 
+    ? Math.round(((numericComparePrice - numericPrice) / numericComparePrice) * 100)
+    : 0;
+
+  const currentDisplayImg = images[selectedImgIdx] || images[0] || null;
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-5 animate-in fade-in duration-150">
+      <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
+        {/* Header Bar */}
+        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3 bg-white shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-[#00695C] border border-teal-100">
+              {product.category}
+            </span>
+            <span className="font-mono text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
+              {product.sku}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Scrollable Modal Body */}
+        <div className="overflow-y-auto p-5 sm:p-7 flex flex-col gap-6">
+          {/* 1. Media Showcase */}
+          {currentDisplayImg ? (
+            <div className="flex flex-col gap-3">
+              <div className="h-64 sm:h-72 w-full rounded-2xl bg-slate-900/5 relative overflow-hidden border border-slate-200/80 shadow-2xs group flex items-center justify-center">
+                <img
+                  src={currentDisplayImg}
+                  alt={product.title}
+                  className="w-full h-full object-cover"
+                />
+                {hasDiscount && (
+                  <span className="absolute top-3 left-3 bg-rose-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-md backdrop-blur-xs">
+                    -{discountPercent}% OFF
+                  </span>
+                )}
+                <span className={`absolute top-3 right-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-md ${
+                  product.status === 'Active' || product.status === 'ACTIVE'
+                    ? 'bg-emerald-600/90 text-white'
+                    : product.status === 'Suspended' || product.status === 'SUSPENDED'
+                    ? 'bg-amber-600/90 text-white'
+                    : 'bg-rose-600/90 text-white'
+                }`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  {product.status}
+                </span>
+              </div>
+
+              {/* Gallery Thumbnails Strip */}
+              {images.length > 1 && (
+                <div className="flex items-center gap-2.5 overflow-x-auto pb-1">
+                  {images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedImgIdx(idx)}
+                      className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all cursor-pointer shrink-0 ${
+                        selectedImgIdx === idx
+                          ? 'border-[#062E35] ring-2 ring-[#062E35]/20 shadow-xs'
+                          : 'border-slate-200 opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={img} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-36 rounded-2xl bg-gradient-to-br from-teal-50 to-slate-100 border border-teal-100/70 p-5 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div 
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xs text-[#062E35]"
+                  style={{ backgroundColor: product.imageColor || '#E0F7FA' }}
+                >
+                  <Package className="w-8 h-8 opacity-80" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-[#0E4F5A] uppercase tracking-wider block">
+                    Product Catalogue Item
+                  </span>
+                  <div className="text-sm font-semibold text-slate-600 mt-0.5">
+                    No custom media uploaded
+                  </div>
+                </div>
+              </div>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                product.status === 'Active' || product.status === 'ACTIVE'
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : product.status === 'Suspended' || product.status === 'SUSPENDED'
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-rose-100 text-rose-800'
+              }`}>
+                {product.status}
+              </span>
+            </div>
+          )}
+
+          {/* 2. Title & Promotional Summary */}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug">
+              {product.title}
+            </h2>
+            {product.summary && (
+              <p className="text-sm text-slate-600 mt-1.5 font-medium leading-relaxed italic">
+                "{product.summary}"
+              </p>
+            )}
+          </div>
+
+          {/* 3. Three Key Metrics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            {/* Price Card */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Selling Price
+              </span>
+              <div className="mt-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900">
+                    ৳{numericPrice.toFixed(2)}
+                  </span>
+                  {numericComparePrice > 0 && (
+                    <span className="text-xs text-slate-400 line-through">
+                      ৳{numericComparePrice.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                {hasDiscount && (
+                  <span className="text-[11px] font-bold text-emerald-600 mt-0.5 block">
+                    Save ৳{(numericComparePrice - numericPrice).toFixed(2)} ({discountPercent}% off)
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Inventory / Stock Card */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Inventory Stock
+              </span>
+              <div className="mt-2">
+                <div className="text-2xl font-black text-slate-900">
+                  {product.stock}
+                  <span className="text-xs font-semibold text-slate-500 ml-1">units</span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className={`w-2 h-2 rounded-full ${
+                    product.stock > 10 ? 'bg-emerald-500' : product.stock > 0 ? 'bg-amber-500' : 'bg-rose-500'
+                  }`} />
+                  <span className="text-[11px] font-bold text-slate-600">
+                    {product.stock > 10 ? 'In Stock' : product.stock > 0 ? 'Low Stock' : 'Out of Stock'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Vendor Partner Card */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Store / Vendor
+              </span>
+              <div className="mt-2">
+                <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5 truncate">
+                  <Store className="w-4 h-4 text-[#062E35] shrink-0" />
+                  <span className="truncate">{product.vendor}</span>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md mt-1 border border-emerald-100">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                  <span>Verified Merchant</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Badges (Feature Tags) */}
+          {product.badges && product.badges.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Product Badges
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {product.badges.map((b, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{b}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 5. Key Highlights */}
+          {product.highlights && product.highlights.length > 0 && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col gap-2.5">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Key Highlights
+              </span>
+              <div className="flex flex-col gap-2">
+                {product.highlights.map((h, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{h}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 6. Technical Specifications */}
+          {product.specifications && Object.keys(product.specifications).length > 0 && (
+            <div className="flex flex-col gap-2.5">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Technical Specifications
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {Object.entries(product.specifications).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
+                  >
+                    <span className="font-medium text-slate-400">{key}</span>
+                    <span className="font-bold text-slate-800">{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 7. Detailed Description */}
+          {product.description && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Full Description
+              </span>
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-100 text-sm text-slate-700 leading-relaxed font-normal whitespace-pre-line">
+                {product.description}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
+          <span className="text-xs text-slate-400 font-mono hidden sm:inline">
+            ID: {product.id}
+          </span>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-white transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={onEdit}
+              className="px-6 py-2.5 rounded-xl bg-[#062E35] hover:bg-[#0A434D] text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-all cursor-pointer active:scale-95"
+            >
+              <Edit3 className="w-4 h-4 text-emerald-400" />
+              <span>Edit Product</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface ProductModalsProps {
   viewingProduct: ProductItem | null;
@@ -36,6 +348,8 @@ interface ProductModalsProps {
   }>>;
   handleCreateProduct: (e: React.FormEvent) => void;
   categoryOptions: string[];
+  fixedVendor?: string;
+  onEditDirect?: (p: ProductItem) => void;
 }
 
 export const ProductModals: React.FC<ProductModalsProps> = ({
@@ -55,92 +369,27 @@ export const ProductModals: React.FC<ProductModalsProps> = ({
   newProductForm,
   setNewProductForm,
   handleCreateProduct,
-  categoryOptions
+  categoryOptions,
+  fixedVendor,
+  onEditDirect,
 }) => {
   return (
     <>
-      {/* MODAL 1: VIEW PRODUCT DETAILS */}
+      {/* MODAL 1: VIEW PRODUCT DETAILS (BEAUTIFUL, CLEAN, MODERN) */}
       {viewingProduct && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 flex flex-col gap-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-start justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs text-[#062E35]"
-                  style={{ backgroundColor: viewingProduct.imageColor }}
-                >
-                  <Package className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 leading-snug">
-                    {viewingProduct.title}
-                  </h3>
-                  <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-                    <span className="font-mono">{viewingProduct.sku}</span>
-                    <span>·</span>
-                    <span className="font-semibold text-[#00695C]">{viewingProduct.category}</span>
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setViewingProduct(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs">
-              <div>
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Description</span>
-                <p className="text-slate-700 mt-1 leading-relaxed text-sm">
-                  {viewingProduct.description}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200/60">
-                <div>
-                  <span className="text-[11px] font-semibold text-slate-400 block">Retail Price</span>
-                  <span className="text-base font-bold text-slate-900">€{viewingProduct.price.toFixed(2)}</span>
-                </div>
-                <div>
-                  <span className="text-[11px] font-semibold text-slate-400 block">Stock Level</span>
-                  <span className="text-sm font-semibold text-slate-800">{viewingProduct.stock} units available</span>
-                </div>
-                <div>
-                  <span className="text-[11px] font-semibold text-slate-400 block">Vendor Partner</span>
-                  <span className="text-slate-800 font-medium">{viewingProduct.vendor}</span>
-                </div>
-                <div>
-                  <span className="text-[11px] font-semibold text-slate-400 block">Current Status</span>
-                  <span className="font-semibold text-slate-800">{viewingProduct.status}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => {
-                  const toEdit = viewingProduct;
-                  setViewingProduct(null);
-                  setEditingProduct({ ...toEdit });
-                }}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                Edit Product
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewingProduct(null)}
-                className="px-5 py-2 rounded-xl bg-[#062E35] text-white text-xs font-semibold hover:bg-[#0A434D] transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <ProductViewModalContent
+          product={viewingProduct}
+          onClose={() => setViewingProduct(null)}
+          onEdit={() => {
+            const p = viewingProduct;
+            setViewingProduct(null);
+            if (onEditDirect) {
+              onEditDirect(p);
+            } else {
+              setEditingProduct({ ...p });
+            }
+          }}
+        />
       )}
 
       {/* MODAL 2: EDIT PRODUCT */}
@@ -198,7 +447,7 @@ export const ProductModals: React.FC<ProductModalsProps> = ({
 
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
-                    Price (€):
+                    Price (৳):
                   </label>
                   <input
                     type="number"
@@ -434,7 +683,7 @@ export const ProductModals: React.FC<ProductModalsProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">
-                    Price (€):
+                    Price (৳):
                   </label>
                   <input
                     type="number"
@@ -462,19 +711,21 @@ export const ProductModals: React.FC<ProductModalsProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">
-                  Vendor Partner:
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. PureBotanica Organics"
-                  value={newProductForm.vendor}
-                  onChange={(e) => setNewProductForm({ ...newProductForm, vendor: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm text-slate-800 focus:outline-none focus:border-[#062E35]"
-                />
-              </div>
+              {!fixedVendor && (
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Vendor Partner:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. PureBotanica Organics"
+                    value={newProductForm.vendor}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, vendor: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-slate-200 text-sm text-slate-800 focus:outline-none focus:border-[#062E35]"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="text-xs font-semibold text-slate-700 block mb-1">

@@ -10,6 +10,7 @@ interface ProductFiltersProps {
   setSelectedStatus: (status: string) => void;
   categoryOptions: string[];
   onFilterChange: () => void;
+  placeholder?: string;
 }
 
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
@@ -20,7 +21,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   selectedStatus,
   setSelectedStatus,
   categoryOptions,
-  onFilterChange
+  onFilterChange,
+  placeholder = 'Search product name, SKU...',
 }) => {
   return (
     <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex flex-col lg:flex-row items-center justify-between gap-4">
@@ -29,7 +31,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         <input
           type="text"
-          placeholder="Search product name, SKU, vendor..."
+          placeholder={placeholder}
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
