@@ -1,6 +1,7 @@
 import React from 'react';
 import { 
   LayoutGrid, 
+  Mail,
   Users, 
   Store, 
   ShoppingCart, 
@@ -14,9 +15,12 @@ import {
   ShoppingBag, 
   Package, 
   LifeBuoy,
-  X
+  X,
+  GraduationCap,
+  MessageSquarePlus,
+  FlaskConical
 } from 'lucide-react';
-import type { PanelType, AdminTab, VendorTab } from '../types';
+import type { PanelType, AdminTab, VendorTab, ExpertTab } from '../types';
 
 interface SidebarProps {
   currentPanel: PanelType;
@@ -25,6 +29,8 @@ interface SidebarProps {
   onAdminTabChange: (tab: AdminTab) => void;
   activeVendorTab: VendorTab;
   onVendorTabChange: (tab: VendorTab) => void;
+  activeExpertTab?: ExpertTab;
+  onExpertTabChange?: (tab: ExpertTab) => void;
   onLogoutClick: () => void;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
@@ -37,6 +43,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onAdminTabChange,
   activeVendorTab,
   onVendorTabChange,
+  activeExpertTab = 'overview',
+  onExpertTabChange,
   onLogoutClick,
   isMobileOpen = false,
   onCloseMobile
@@ -47,10 +55,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const adminMenuItems: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Dashboard', icon: <LayoutGrid className="w-5 h-5 shrink-0" /> },
     { id: 'usermanagement', label: 'User Management', icon: <Users className="w-5 h-5 shrink-0" /> },
+    { id: 'experts', label: 'Agri Experts', icon: <GraduationCap className="w-5 h-5 shrink-0" /> },
     { id: 'product', label: 'Product', icon: <Package className="w-5 h-5 shrink-0" /> },
     { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-5 h-5 shrink-0" /> },
     { id: 'partners', label: 'Partners', icon: <Store className="w-5 h-5 shrink-0" /> },
     { id: 'content', label: 'Content Management', icon: <FileText className="w-5 h-5 shrink-0" /> },
+    { id: 'contact', label: 'Contact Messages', icon: <Mail className="w-5 h-5 shrink-0" /> },
     { id: 'support', label: 'Support', icon: <Headphones className="w-5 h-5 shrink-0" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5 shrink-0" /> }
   ];
@@ -64,13 +74,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5 shrink-0" /> }
   ];
 
-  const menuItems = currentPanel === 'admin' ? adminMenuItems : vendorMenuItems;
+  // Expert items - Dashboard, Farmer Support, Soil Test Support, Profile
+  const expertMenuItems: { id: ExpertTab; label: string; icon: React.ReactNode }[] = [
+    { id: 'overview', label: 'Dashboard', icon: <LayoutGrid className="w-5 h-5 shrink-0" /> },
+    { id: 'consultations', label: 'Farmer Support', icon: <MessageSquarePlus className="w-5 h-5 shrink-0" /> },
+    { id: 'soil-tests', label: 'Soil Test Support', icon: <FlaskConical className="w-5 h-5 shrink-0" /> },
+    { id: 'settings', label: 'Profile', icon: <Settings className="w-5 h-5 shrink-0" /> }
+  ];
+
+  const menuItems = 
+    currentPanel === 'admin' 
+      ? adminMenuItems 
+      : currentPanel === 'vendor' 
+      ? vendorMenuItems 
+      : expertMenuItems;
 
   const handleTabClick = (id: string) => {
     if (currentPanel === 'admin') {
       onAdminTabChange(id as AdminTab);
-    } else {
+    } else if (currentPanel === 'vendor') {
       onVendorTabChange(id as VendorTab);
+    } else {
+      onExpertTabChange?.(id as ExpertTab);
     }
     onCloseMobile?.();
   };
@@ -118,11 +143,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Role Switcher Pill */}
             <div className="px-4 pt-4 pb-2">
-              <div className="flex bg-[#042025] p-1 rounded-xl border border-white/10">
+              <div className="flex bg-[#042025] p-1 rounded-xl border border-white/10 gap-1">
                 <button
                   type="button"
                   onClick={() => handlePanelSwitch('admin')}
-                  className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
                     currentPanel === 'admin'
                       ? 'bg-[#0E4F5A] text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
@@ -134,7 +159,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePanelSwitch('vendor')}
-                  className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
                     currentPanel === 'vendor'
                       ? 'bg-[#0E4F5A] text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
@@ -142,6 +167,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <ShoppingBag className="w-3.5 h-3.5" />
                   <span>Vendor</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePanelSwitch('expert')}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                    currentPanel === 'expert'
+                      ? 'bg-[#0E4F5A] text-[#CBFF54] shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>Expert</span>
                 </button>
               </div>
             </div>
@@ -151,7 +188,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {menuItems.map((item) => {
                 const isActive = currentPanel === 'admin' 
                   ? activeAdminTab === item.id 
-                  : activeVendorTab === item.id;
+                  : currentPanel === 'vendor'
+                  ? activeVendorTab === item.id
+                  : activeExpertTab === item.id;
 
                 return (
                   <button
@@ -179,14 +218,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="p-4 border-t border-white/10 flex flex-col gap-2">
               <div className="flex items-center gap-3 px-2 py-2 rounded-xl">
                 <div className="w-9 h-9 rounded-full bg-[#0E4F5A] border border-white/20 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  A
+                  {currentPanel === 'expert' ? 'E' : currentPanel === 'vendor' ? 'V' : 'A'}
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-white text-sm font-semibold truncate leading-tight">
-                    Eva Turner
+                    {currentPanel === 'expert' ? 'Dr. Tariqul Islam' : 'Eva Turner'}
                   </span>
                   <span className="text-[#8AA3A8] text-xs font-normal">
-                    {currentPanel === 'admin' ? 'Admin Suite' : 'Vendor Hub'}
+                    {currentPanel === 'admin' ? 'Admin Suite' : currentPanel === 'vendor' ? 'Vendor Hub' : 'Expert Portal'}
                   </span>
                 </div>
               </div>
@@ -245,11 +284,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Role / Switcher Toggle Pill */}
         {!isCollapsed && (
           <div className="px-5 pt-3 pb-2 shrink-0">
-            <div className="flex bg-[#042025] p-1 rounded-xl border border-white/10">
+            <div className="flex bg-[#042025] p-1 rounded-xl border border-white/10 gap-1">
               <button
                 type="button"
                 onClick={() => onPanelChange('admin')}
-                className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
                   currentPanel === 'admin'
                     ? 'bg-[#0E4F5A] text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
@@ -261,7 +300,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 type="button"
                 onClick={() => onPanelChange('vendor')}
-                className={`flex-1 py-1.5 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
                   currentPanel === 'vendor'
                     ? 'bg-[#0E4F5A] text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
@@ -269,6 +308,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <ShoppingBag className="w-3.5 h-3.5" />
                 <span>Vendor</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onPanelChange('expert')}
+                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                  currentPanel === 'expert'
+                    ? 'bg-[#0E4F5A] text-[#CBFF54] shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span>Expert</span>
               </button>
             </div>
           </div>
@@ -279,7 +330,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {menuItems.map((item) => {
             const isActive = currentPanel === 'admin' 
               ? activeAdminTab === item.id 
-              : activeVendorTab === item.id;
+              : currentPanel === 'vendor'
+              ? activeVendorTab === item.id
+              : activeExpertTab === item.id;
 
             return (
               <button
@@ -311,15 +364,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* User Card */}
           <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-2 py-2 rounded-xl`}>
             <div className="w-9 h-9 rounded-full bg-[#0E4F5A] border border-white/20 flex items-center justify-center text-white font-bold text-sm shrink-0">
-              A
+              {currentPanel === 'expert' ? 'E' : currentPanel === 'vendor' ? 'V' : 'A'}
             </div>
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-white text-sm font-semibold truncate leading-tight">
-                  Eva Turner
+                  {currentPanel === 'expert' ? 'Dr. Tariqul Islam' : 'Eva Turner'}
                 </span>
                 <span className="text-[#8AA3A8] text-xs font-normal">
-                  {currentPanel === 'admin' ? 'Admin' : 'Vendor'}
+                  {currentPanel === 'admin' ? 'Admin Suite' : currentPanel === 'vendor' ? 'Vendor Hub' : 'Expert Portal'}
                 </span>
               </div>
             )}

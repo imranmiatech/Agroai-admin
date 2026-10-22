@@ -3,6 +3,7 @@ import { MainLayout } from '../layouts/MainLayout';
 import { authRoutes } from './authRoutes';
 import { adminRoutes } from './adminRoutes';
 import { vendorRoutes } from './vendorRoutes';
+import { expertRoutes } from './expertRoutes';
 
 export const AppRoutes = () => {
   return (
@@ -10,7 +11,7 @@ export const AppRoutes = () => {
       {/* 1. Authentication Routes (Full-screen minimal layout without Sidebar) */}
       {authRoutes}
 
-      {/* 2. Main Application App Layout (Admin & Vendor Panels) */}
+      {/* 2. Main Application App Layout (Admin, Vendor & Expert Panels) */}
       <Route element={<MainLayout />}>
         {/* Admin Section */}
         {adminRoutes}
@@ -18,11 +19,19 @@ export const AppRoutes = () => {
         {/* Vendor Section */}
         {vendorRoutes}
 
+        {/* Expert Section */}
+        {expertRoutes}
+
         {/* Global / Friendly Navigation Shortcuts */}
         <Route path="/overview" element={<Navigate to="/admin/overview" replace />} />
         <Route path="/dashboard" element={<Navigate to="/admin/overview" replace />} />
         <Route path="/users" element={<Navigate to="/admin/usermanagement" replace />} />
         <Route path="/usermanagement" element={<Navigate to="/admin/usermanagement" replace />} />
+        <Route path="/experts" element={<Navigate to="/admin/experts" replace />} />
+        <Route path="/expert" element={<Navigate to="/expert/overview" replace />} />
+        <Route path="/consultations" element={<Navigate to="/expert/consultations" replace />} />
+        <Route path="/appointments" element={<Navigate to="/expert/appointments" replace />} />
+        <Route path="/soil-reports" element={<Navigate to="/expert/soil-reports" replace />} />
         <Route path="/product" element={<Navigate to="/admin/product" replace />} />
         <Route path="/orders" element={<Navigate to="/admin/orders" replace />} />
         <Route path="/partners" element={<Navigate to="/admin/partners" replace />} />

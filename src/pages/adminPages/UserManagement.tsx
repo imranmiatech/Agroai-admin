@@ -75,7 +75,7 @@ export const UserManagement: React.FC = () => {
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'All' | 'Customer' | 'Vendor' | 'Admin'>('All');
+  const [selectedRole, setSelectedRole] = useState<'All' | 'Customer' | 'Vendor' | 'Admin' | 'Expert'>('All');
   const [selectedStatus, setSelectedStatus] = useState<'All' | 'Active' | 'Inactive' | 'Suspended'>('All');
 
   // Debounce search input to avoid lag and spamming the backend (snappy 250ms)

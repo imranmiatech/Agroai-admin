@@ -37,7 +37,7 @@ export interface UserMetricsResponse {
   data: UserMetricsData;
 }
 
-export type UserRole = 'CUSTOMER' | 'VENDOR' | 'ADMIN';
+export type UserRole = 'CUSTOMER' | 'VENDOR' | 'ADMIN' | 'EXPERT';
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 
 export interface UserVendorProfile {

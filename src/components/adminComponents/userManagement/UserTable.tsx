@@ -80,6 +80,7 @@ const UserTableRow = memo<{
         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
           roleLower === 'admin' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
           roleLower === 'vendor' ? 'bg-sky-50 text-sky-700 border border-sky-200' :
+          roleLower === 'expert' ? 'bg-[#E2ECEE] text-[#062E35] border border-emerald-200/80 font-bold' :
           roleLower === 'customer' ? 'bg-teal-50 text-teal-700 border border-teal-200' :
           'bg-[#E0F7FA] text-[#00695C] border border-teal-100'
         }`}>

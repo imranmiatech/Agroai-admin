@@ -55,6 +55,7 @@ export const UserFilters: React.FC<UserFiltersProps> = memo(({
             <option value="Customer">Customer</option>
             <option value="Vendor">Vendor</option>
             <option value="Admin">Admin</option>
+            <option value="Expert">Expert</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

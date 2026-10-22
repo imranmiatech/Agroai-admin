@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
-import type { PanelType, AdminTab, VendorTab } from '../types';
+import type { PanelType, AdminTab, VendorTab, ExpertTab } from '../types';
 import { Sidebar } from '../Common/Sidebar';
 import { Header } from '../Common/Header';
 import { LogOut, X, CheckCircle2 } from 'lucide-react';
@@ -31,23 +31,26 @@ export const MainLayout = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Guard vendor from accessing admin routes
+  // Guard role routing
   useEffect(() => {
-    if (user?.role === 'VENDOR' && location.pathname.startsWith('/admin')) {
+    if (user?.role === 'EXPERT' && (location.pathname.startsWith('/admin') || location.pathname.startsWith('/vendor'))) {
+      navigate('/expert/overview', { replace: true });
+    } else if (user?.role === 'VENDOR' && (location.pathname.startsWith('/admin') || location.pathname.startsWith('/expert'))) {
       navigate('/vendor/overview', { replace: true });
     }
   }, [user, location.pathname, navigate]);
 
   // Derive panel and active tab directly from URL route
   const isVendor = location.pathname.startsWith('/vendor');
-  const currentPanel: PanelType = isVendor ? 'vendor' : 'admin';
+  const isExpert = location.pathname.startsWith('/expert');
+  const currentPanel: PanelType = isExpert ? 'expert' : isVendor ? 'vendor' : 'admin';
 
   // Extract tab slug from pathname, e.g. /admin/product -> "product"
   const pathSegments = location.pathname.split('/').filter(Boolean);
   const activeTabSlug = pathSegments[1] || 'overview';
 
   const activeAdminTab: AdminTab = (
-    ['overview', 'usermanagement', 'product', 'orders', 'partners', 'content', 'support', 'settings'].includes(activeTabSlug)
+    ['overview', 'usermanagement', 'experts', 'product', 'orders', 'partners', 'content', 'contact', 'support', 'settings'].includes(activeTabSlug)
       ? activeTabSlug
       : 'overview'
   ) as AdminTab;
@@ -58,11 +61,19 @@ export const MainLayout = () => {
       : 'overview'
   ) as VendorTab;
 
+  const activeExpertTab: ExpertTab = (
+    ['overview', 'consultations', 'soil-tests', 'settings'].includes(activeTabSlug)
+      ? activeTabSlug
+      : 'overview'
+  ) as ExpertTab;
+
   const handlePanelChange = (panel: PanelType) => {
     if (panel === 'admin') {
       navigate('/admin/overview');
-    } else {
+    } else if (panel === 'vendor') {
       navigate('/vendor/overview');
+    } else {
+      navigate('/expert/overview');
     }
   };
 
@@ -87,6 +98,8 @@ export const MainLayout = () => {
           onAdminTabChange={(tab: AdminTab) => navigate(`/admin/${tab}`)}
           activeVendorTab={activeVendorTab}
           onVendorTabChange={(tab: VendorTab) => navigate(`/vendor/${tab}`)}
+          activeExpertTab={activeExpertTab}
+          onExpertTabChange={(tab: ExpertTab) => navigate(`/expert/${tab}`)}
           onLogoutClick={() => setShowLogoutModal(true)}
         />
       </div>
@@ -133,6 +146,11 @@ export const MainLayout = () => {
               navigate(`/vendor/${tab}`);
               setIsMobileNavOpen(false);
             }}
+            activeExpertTab={activeExpertTab}
+            onExpertTabChange={(tab: ExpertTab) => {
+              navigate(`/expert/${tab}`);
+              setIsMobileNavOpen(false);
+            }}
             onLogoutClick={() => {
               setIsMobileNavOpen(false);
               setShowLogoutModal(true);
@@ -150,6 +168,7 @@ export const MainLayout = () => {
           currentPanel={currentPanel}
           activeAdminTab={activeAdminTab}
           activeVendorTab={activeVendorTab}
+          activeExpertTab={activeExpertTab}
           onOpenNotifications={() => setShowNotifications((prev) => !prev)}
           onOpenMobileMenu={() => setIsMobileNavOpen(!isMobileNavOpen)}
         />

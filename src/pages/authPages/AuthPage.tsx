@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 import {
@@ -64,6 +64,8 @@ export const AuthPage: React.FC = () => {
       setTimeout(() => {
         if (user.role === 'ADMIN') {
           navigate('/admin/overview');
+        } else if (user.role === 'EXPERT') {
+          navigate('/expert/overview');
         } else {
           navigate('/vendor/overview');
         }

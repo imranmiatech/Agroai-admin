@@ -11,10 +11,12 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'CUSTOMER' | 'VENDOR' | 'ADMIN';
+  role: 'CUSTOMER' | 'VENDOR' | 'ADMIN' | 'EXPERT';
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   isEmailVerified?: boolean;
   avatar?: string | null;
+  phone?: string | null;
+  specialization?: string | null;
   vendorProfile?: VendorProfileSummary;
 }
 
