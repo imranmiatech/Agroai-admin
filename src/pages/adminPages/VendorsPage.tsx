@@ -1,33 +1,19 @@
 import { useState } from 'react';
-import { 
-  BarChart2, 
-  UserPlus 
-} from 'lucide-react';
-import { 
-  PartnershipRequestsTable, 
-  PartnersOverviewView, 
-  PartnersModals 
+import { BarChart2, UserPlus } from 'lucide-react';
+import {
+  PartnershipRequestsTable,
+  PartnersOverviewView,
+  PartnersModals,
 } from '../../components/adminComponents/partners';
+import {
+  useGetPartnerDivisionsQuery,
+  useUpdatePartnerStatusMutation,
+  type PartnershipRequest,
+  type RequestStatus,
+  type CategoryItem,
+} from '../../redux';
 
-export interface CategoryItem {
-  name: string;
-  count: number;
-  color: string;
-}
-
-export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
-
-export interface PartnershipRequest {
-  id: string;
-  businessName: string;
-  description: string;
-  category: string;
-  ownerName: string;
-  email: string;
-  phone: string;
-  status: RequestStatus;
-  submittedDate: string;
-}
+export type { PartnershipRequest, RequestStatus, CategoryItem };
 
 export const VendorsPage = () => {
   // Navigation tabs: Only 'overview' and 'requests'
@@ -36,117 +22,32 @@ export const VendorsPage = () => {
   // Detail Modal state for selected request
   const [selectedRequest, setSelectedRequest] = useState<PartnershipRequest | null>(null);
 
-
-
-  // Division breakdown data for Partners by Division
-  const categories: CategoryItem[] = [
-    { name: 'Dhaka', count: 9, color: '#059669' },
-    { name: 'Chattogram', count: 7, color: '#0EA5E9' },
-    { name: 'Rajshahi', count: 5, color: '#F59E0B' },
-    { name: 'Khulna', count: 4, color: '#14B8A6' },
-    { name: 'Barishal', count: 3, color: '#8B5CF6' },
-    { name: 'Sylhet', count: 4, color: '#10B981' },
-    { name: 'Rangpur', count: 3, color: '#EC4899' },
-    { name: 'Mymensingh', count: 2, color: '#F97316' }
+  // Live dynamic divisions breakdown from database
+  const { data: divisionsRes } = useGetPartnerDivisionsQuery();
+  const categories: CategoryItem[] = divisionsRes?.data?.divisions || [
+    { name: 'Dhaka', count: 0, color: '#059669' },
+    { name: 'Chattogram', count: 0, color: '#0EA5E9' },
+    { name: 'Rajshahi', count: 0, color: '#F59E0B' },
+    { name: 'Khulna', count: 0, color: '#14B8A6' },
+    { name: 'Barishal', count: 0, color: '#8B5CF6' },
+    { name: 'Sylhet', count: 0, color: '#10B981' },
+    { name: 'Rangpur', count: 0, color: '#EC4899' },
+    { name: 'Mymensingh', count: 0, color: '#F97316' },
   ];
 
-  // Partnership requests data
-  const [requests, setRequests] = useState<PartnershipRequest[]>([
-    {
-      id: 'REQ-201',
-      businessName: 'Safe Sleep Practices for Infants',
-      description: 'Evidence-based safe sleep .........',
-      category: 'Dhaka',
-      ownerName: 'Clara Gallagher',
-      email: 'clara@safesleepireland.ie',
-      phone: '+353 87 123 4567',
-      status: 'APPROVED',
-      submittedDate: 'Jul 6, 2025'
-    },
-    {
-      id: 'REQ-202',
-      businessName: 'Green Valley Organic Seeds',
-      description: 'High quality agricultural inputs and seeds.',
-      category: 'Dhaka',
-      ownerName: 'Liam O’Sullivan',
-      email: 'liam@greenvalley.com',
-      phone: '+353 89 234 5678',
-      status: 'PENDING',
-      submittedDate: 'Jul 6, 2025'
-    },
-    {
-      id: 'REQ-203',
-      businessName: 'Chittagong Coastal Fisheries',
-      description: 'Fresh seafood supply and modern aquaculture.',
-      category: 'Chattogram',
-      ownerName: 'Aoife Kelly',
-      email: 'aoife@coastalmarine.com',
-      phone: '+353 86 345 6789',
-      status: 'APPROVED',
-      submittedDate: 'Jul 6, 2025'
-    },
-    {
-      id: 'REQ-204',
-      businessName: 'Rajshahi Mango & Silk Producers',
-      description: 'Authentic seasonal fruits and artisanal goods.',
-      category: 'Rajshahi',
-      ownerName: 'Sean Murphy',
-      email: 'sean@rajshahiproduce.com',
-      phone: '+353 85 456 7890',
-      status: 'PENDING',
-      submittedDate: 'Jul 6, 2025'
-    },
-    {
-      id: 'REQ-205',
-      businessName: 'Sylhet Valley Tea Plantations',
-      description: 'Premium organic tea leaves directly from gardens.',
-      category: 'Sylhet',
-      ownerName: 'Niamh Byrne',
-      email: 'niamh@sylhetvalleytea.com',
-      phone: '+353 87 567 8901',
-      status: 'REJECTED',
-      submittedDate: 'Jul 6, 2025'
-    },
-    {
-      id: 'REQ-206',
-      businessName: 'Khulna Agro & Poultry Care',
-      description: 'Livestock nutrition and eco-friendly poultry feeds.',
-      category: 'Khulna',
-      ownerName: 'Conor Walsh',
-      email: 'conor.walsh@khulnaagro.com',
-      phone: '+353 89 678 9012',
-      status: 'SUSPENDED',
-      submittedDate: 'Jul 5, 2025'
-    },
-    {
-      id: 'REQ-207',
-      businessName: 'Barishal River Delta Produce',
-      description: 'Rice, guava, and riverine organic harvest.',
-      category: 'Barishal',
-      ownerName: 'Sinead Dunne',
-      email: 'sinead@barishalproduce.com',
-      phone: '+353 86 789 0123',
-      status: 'PENDING',
-      submittedDate: 'Jul 4, 2025'
-    },
-    {
-      id: 'REQ-208',
-      businessName: 'Rangpur Cold Storage & Crops',
-      description: 'Potato, maize and crop preservation facilities.',
-      category: 'Rangpur',
-      ownerName: 'Patrick O’Donnell',
-      email: 'patrick@rangpurstorage.com',
-      phone: '+353 85 890 1234',
-      status: 'APPROVED',
-      submittedDate: 'Jul 3, 2025'
-    }
-  ]);
+  // Update status mutation
+  const [updatePartnerStatus, { isLoading: isUpdating }] = useUpdatePartnerStatusMutation();
 
   // Update status handler for detail modal
-  const handleUpdateStatus = (id: string, newStatus: RequestStatus) => {
-    setRequests(requests.map(r => r.id === id ? { ...r, status: newStatus } : r));
-    if (selectedRequest && selectedRequest.id === id) {
-      setSelectedRequest({ ...selectedRequest, status: newStatus });
+  const handleUpdateStatus = async (id: string, newStatus: RequestStatus) => {
+    try {
+      await updatePartnerStatus({ id, status: newStatus }).unwrap();
+      if (selectedRequest && selectedRequest.id === id) {
+        setSelectedRequest({ ...selectedRequest, status: newStatus });
+      }
+    } catch (error) {
+      console.error('Failed to update status', error);
+      throw error;
     }
   };
 
@@ -196,7 +97,6 @@ export const VendorsPage = () => {
       {/* VIEW 1: PARTNERSHIP REQUESTS TAB */}
       {activeTab === 'requests' && (
         <PartnershipRequestsTable
-          requests={requests}
           categories={categories}
           onSelectRequest={(req) => setSelectedRequest(req)}
         />
@@ -205,7 +105,6 @@ export const VendorsPage = () => {
       {/* VIEW 2: OVERVIEW TAB */}
       {activeTab === 'overview' && (
         <PartnersOverviewView
-          categories={categories}
           onNavigateToRequests={() => setActiveTab('requests')}
         />
       )}
@@ -215,6 +114,7 @@ export const VendorsPage = () => {
         selectedRequest={selectedRequest}
         setSelectedRequest={setSelectedRequest}
         handleUpdateStatus={handleUpdateStatus}
+        isUpdating={isUpdating}
       />
     </div>
   );

@@ -6,6 +6,7 @@ import { AddProductPage } from '../pages/adminPages/AddProductPage';
 import { AdminOrders } from '../pages/adminPages/AdminOrders';
 import { VendorsPage } from '../pages/adminPages/VendorsPage';
 import { ContentManagement } from '../pages/adminPages/ContentManagement';
+import { ArticleEditorPage } from '../pages/adminPages/ArticleEditorPage';
 import { AdminSupport } from '../pages/adminPages/AdminSupport';
 import { AdminSettings } from '../pages/adminPages/AdminSettings';
 
@@ -21,6 +22,9 @@ export const adminRoutes = (
     <Route path="orders" element={<AdminOrders />} />
     <Route path="partners" element={<VendorsPage />} />
     <Route path="content" element={<ContentManagement />} />
+    <Route path="content/create" element={<ArticleEditorPage />} />
+    <Route path="content/add" element={<Navigate to="/admin/content/create" replace />} />
+    <Route path="content/edit/:id" element={<ArticleEditorPage />} />
     <Route path="support" element={<AdminSupport />} />
     <Route path="settings" element={<AdminSettings />} />
   </Route>

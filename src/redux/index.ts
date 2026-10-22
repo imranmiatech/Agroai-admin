@@ -1,4 +1,4 @@
-// Store & Typed Hooks
+﻿// Store & Typed Hooks
 export { store } from './store/store';
 export type { RootState, AppDispatch } from './store/store';
 export { useAppDispatch, useAppSelector } from './store/hooks';
@@ -26,3 +26,10 @@ export * from './feature/products/productsApi';
 // Settings Feature
 export * from './feature/settings/settingsType';
 export * from './feature/settings/settingsApi';
+
+// Partners Feature
+export * from './feature/partners/partnersType';
+export * from './feature/partners/partnersApi';
+
+export * from './feature/content/contentApi';
+export * from './feature/content/contentType';
