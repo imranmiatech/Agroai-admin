@@ -45,3 +45,6 @@ export * from './feature/consultations/consultationsType';
 
 export * from './feature/soilTests/soilTestsApi';
 export * from './feature/soilTests/soilTestsType';
+
+export * from './feature/orders/ordersApi';
+export * from './feature/orders/ordersType';

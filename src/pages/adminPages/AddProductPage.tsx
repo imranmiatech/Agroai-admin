@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { 
+  Search,
   ArrowLeft, 
   UploadCloud, 
   Package, 
@@ -25,6 +26,7 @@ import {
 import { 
   useAppSelector,
   useCreateProductMutation,
+  useSearchVendorsQuery,
   useUpdateProductMutation,
   useGetProductByIdQuery,
   type ProductStatus,
@@ -70,14 +72,6 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
   const vendorName = user?.vendorProfile?.businessName || user?.name || 'Agro Verified Vendor';
   const vendorProfileId = user?.vendorProfile?.id;
 
-  // RTK Query hooks
-  const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
-  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
-  const { data: existingProductResponse, isLoading: isLoadingExisting } = useGetProductByIdQuery(
-    editProductId || '',
-    { skip: !editProductId }
-  );
-
   // Form State
   const [name, setName] = useState('');
   const [sku, setSku] = useState(`AGRO-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -85,12 +79,28 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
   const [category, setCategory] = useState(AGRICULTURE_CATEGORIES[0]);
   const [customCategory, setCustomCategory] = useState('');
   const [price, setPrice] = useState('');
+  const [deliveryCharge, setDeliveryCharge] = useState('0');
+  const [vendorSearchQuery, setVendorSearchQuery] = useState('');
+  const [isVendorDropdownOpen, setIsVendorDropdownOpen] = useState(false);
+  const [selectedVendorInfo, setSelectedVendorInfo] = useState<{ id: string; businessName: string; email?: string } | null>(null);
   const [compareAtPrice, setCompareAtPrice] = useState('');
   const [stock, setStock] = useState('50');
   const [vendorId, setVendorId] = useState(vendorProfileId || '');
   const [status, setStatus] = useState<ProductStatus>('ACTIVE');
   const [summary, setSummary] = useState('');
   const [description, setDescription] = useState('');
+
+  // RTK Query hooks
+  const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
+  const { data: searchedVendorsResp, isFetching: isSearchingVendors } = useSearchVendorsQuery(vendorSearchQuery, {
+    skip: isVendor,
+  });
+  const vendorSearchResults = searchedVendorsResp?.data || [];
+  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
+  const { data: existingProductResponse, isLoading: isLoadingExisting } = useGetProductByIdQuery(
+    editProductId || '',
+    { skip: !editProductId }
+  );
 
   // Highlights (bullet points)
   const [highlights, setHighlights] = useState<string[]>([
@@ -141,7 +151,18 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
       setStatus(p.status || 'ACTIVE');
       setSummary(p.summary || '');
       setDescription(p.description || '');
-      if (p.vendorId) setVendorId(p.vendorId);
+      if (p.vendorId) {
+        setVendorId(p.vendorId);
+        if (p.vendor) {
+          setSelectedVendorInfo({
+            id: p.vendor.id,
+            businessName: p.vendor.businessName,
+          });
+        }
+      }
+      if (p.deliveryCharge !== undefined && p.deliveryCharge !== null) {
+        setDeliveryCharge(String(p.deliveryCharge));
+      }
       if (Array.isArray(p.highlights)) setHighlights(p.highlights);
       if (Array.isArray(p.badges)) setBadges(p.badges);
       if (Array.isArray(p.images)) setImagePreviews(p.images);
@@ -286,6 +307,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
         formData.append('name', name.trim());
         formData.append('category', finalCategory);
         formData.append('price', String(numericPrice));
+        formData.append('deliveryCharge', String(parseFloat(deliveryCharge) || 0));
         if (numericComparePrice > 0) {
           formData.append('compareAtPrice', String(numericComparePrice));
         }
@@ -324,6 +346,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
           name: name.trim(),
           category: finalCategory,
           price: numericPrice,
+          deliveryCharge: parseFloat(deliveryCharge) || 0,
           compareAtPrice: numericComparePrice > 0 ? numericComparePrice : undefined,
           stock: parseInt(stock) || 0,
           status,
@@ -798,6 +821,30 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
                 <span className="text-[11px] text-slate-400 mt-1 block">Shows crossed-out original price</span>
               </div>
 
+              {/* Delivery Charge */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">
+                  Delivery Charge (৳)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">
+                    ৳
+                  </span>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={deliveryCharge}
+                    onChange={(e) => setDeliveryCharge(e.target.value)}
+                    placeholder="60.00"
+                    className="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 font-extrabold focus:outline-none focus:border-[#062E35] focus:ring-3 focus:ring-[#062E35]/10"
+                  />
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  Delivery / shipping cost in BDT (0 for Free Delivery)
+                </span>
+              </div>
+
               {/* Stock Quantity */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">
@@ -1060,20 +1107,106 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
                 </span>
               </div>
             ) : (
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Vendor Profile ID (Admin Override)
+              <div className="flex flex-col gap-3">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Assign Vendor (Search By Name)
                 </label>
-                <input
-                  type="text"
-                  value={vendorId}
-                  onChange={(e) => setVendorId(e.target.value)}
-                  placeholder="v1d2e3f4-5678-90ab-cdef-..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 font-mono focus:outline-none focus:border-[#062E35]"
-                />
-                <span className="text-[11px] text-slate-400 mt-1 block">
-                  Leave empty if owned directly by Krisikunjo Platform.
-                </span>
+
+                {vendorId ? (
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-[#062E35] text-white flex items-center justify-center shrink-0">
+                        <Store className="w-4 h-4" />
+                      </div>
+                      <div className="truncate">
+                        <div className="text-xs font-bold text-slate-900 truncate">
+                          {selectedVendorInfo?.businessName || 'Assigned Vendor'}
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-500 truncate">{vendorId}</div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVendorId('');
+                        setSelectedVendorInfo(null);
+                      }}
+                      className="text-xs text-rose-600 hover:text-rose-800 font-semibold px-2 py-1 rounded-md hover:bg-rose-50 transition cursor-pointer shrink-0"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="relative">
+                      <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={vendorSearchQuery}
+                        onChange={(e) => {
+                          setVendorSearchQuery(e.target.value);
+                          setIsVendorDropdownOpen(true);
+                        }}
+                        onFocus={() => setIsVendorDropdownOpen(true)}
+                        placeholder="Search vendor by business or owner name..."
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#062E35] focus:ring-2 focus:ring-[#062E35]/10"
+                      />
+                    </div>
+
+                    {isVendorDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-xl border border-slate-200 max-h-56 overflow-y-auto z-50 p-1 flex flex-col gap-0.5">
+                        {isSearchingVendors ? (
+                          <div className="p-3 text-center text-xs text-slate-400">Searching vendors...</div>
+                        ) : vendorSearchResults.length === 0 ? (
+                          <div className="p-3 text-center text-xs text-slate-500">
+                            No verified vendors found matching "{vendorSearchQuery}".
+                          </div>
+                        ) : (
+                          vendorSearchResults.map((v: any) => (
+                            <button
+                              key={v.id}
+                              type="button"
+                              onClick={() => {
+                                setVendorId(v.id);
+                                setSelectedVendorInfo({
+                                  id: v.id,
+                                  businessName: v.businessName,
+                                  email: v.user?.email,
+                                });
+                                setIsVendorDropdownOpen(false);
+                                setVendorSearchQuery('');
+                              }}
+                              className="w-full text-left p-2.5 rounded-lg hover:bg-emerald-50/70 transition flex items-center justify-between gap-2 cursor-pointer group"
+                            >
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-slate-900 group-hover:text-[#062E35] truncate">
+                                  {v.businessName}
+                                </div>
+                                <div className="text-[10px] text-slate-500 truncate">
+                                  {v.user?.name ? `Owner: ${v.user.name}` : ''} {v.city ? `• ${v.city}` : ''}
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
+                                {v.id.slice(0, 8)}...
+                              </span>
+                            </button>
+                          ))
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setIsVendorDropdownOpen(false)}
+                          className="w-full text-center py-1 text-[11px] text-slate-400 hover:text-slate-600 border-t border-slate-100 mt-1 cursor-pointer"
+                        >
+                          Close Dropdown
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Leave empty if owned directly by Krisikunjo Platform.</span>
+                </div>
               </div>
             )}
           </div>

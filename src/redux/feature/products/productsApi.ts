@@ -90,7 +90,26 @@ export const productsApi = baseApi.injectEndpoints({
       ],
     }),
 
-    deleteProduct: builder.mutation<
+        searchVendors: builder.query<{
+      statusCode?: number;
+      message?: string;
+      data: Array<{
+        id: string;
+        businessName: string;
+        category?: string;
+        city?: string;
+        logo?: string;
+        user?: { id: string; name: string; email: string };
+      }>;
+    }, string | void>({
+      query: (search) => ({
+        url: '/products/vendors/search',
+        method: 'GET',
+        params: search ? { q: search } : {},
+      }),
+    }),
+
+deleteProduct: builder.mutation<
       { statusCode?: number; message?: string },
       string
     >({
@@ -113,5 +132,6 @@ export const {
   useUpdateProductMutation,
   useUpdateProductStatusMutation,
   useDeleteProductMutation,
+  useSearchVendorsQuery,
   usePrefetch: useProductsPrefetch,
 } = productsApi;

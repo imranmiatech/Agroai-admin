@@ -17,6 +17,7 @@ export interface ProductItem {
   category: string;
   price: number;
   compareAtPrice?: number | null;
+  deliveryCharge?: number;
   stock: number;
   status: ProductStatus;
   summary?: string | null;
@@ -38,6 +39,7 @@ export interface CreateProductPayload {
   category: string;
   price: number;
   compareAtPrice?: number;
+  deliveryCharge?: number;
   stock?: number;
   sku?: string;
   slug?: string;
