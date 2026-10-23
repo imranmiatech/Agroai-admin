@@ -1,4 +1,4 @@
-import { baseApi } from '../../baseApi/baseApi';
+﻿import { baseApi } from '../../baseApi/baseApi';
 import type { 
   ConsultationTicket, 
   ConsultationStatus,
@@ -48,6 +48,22 @@ export const consultationsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Consultation'],
     }),
+
+    markConsultationSeen: builder.mutation<ConsultationTicket, string>({
+      query: (ticketId) => ({
+        url: `/consultations/${ticketId}/seen`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Consultation'],
+    }),
+
+    deleteConsultation: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (ticketId) => ({
+        url: `/consultations/${ticketId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Consultation'],
+    }),
   }),
 });
 
@@ -56,4 +72,6 @@ export const {
   useGetConsultationByIdQuery,
   useSendConsultationMessageMutation,
   useUpdateConsultationStatusMutation,
+  useMarkConsultationSeenMutation,
+  useDeleteConsultationMutation,
 } = consultationsApi;

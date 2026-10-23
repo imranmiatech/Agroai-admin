@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   MessageSquarePlus,
   FlaskConical,
@@ -7,35 +7,52 @@ import {
   ArrowRight,
   TrendingUp,
   ShieldCheck,
-} from 'lucide-react';
+  RefreshCw,
+} from "lucide-react";
 import {
-  useGetConsultationsQuery,
-  useGetSoilTestsQuery,
+  useGetExpertOverviewMetricsQuery,
+  useGetExpertRecentConsultationsQuery,
+  useGetExpertRecentSoilTestsQuery,
   useAppSelector,
-} from '../../redux';
+} from "../../redux";
 
 export const ExpertOverview: React.FC = () => {
   const navigate = useNavigate();
   const user = useAppSelector((state) => state.auth.user);
-  const expertName = user?.name || 'Dr. Agricultural Specialist';
+  const expertName = user?.name || "Dr. Agricultural Specialist";
 
-  // 1. Live Consultations
-  const { data: consultations = [] } = useGetConsultationsQuery(undefined, {
-    pollingInterval: 5000,
-  });
+  // 1. Dedicated Metrics Endpoint (/expert/overview/metrics)
+  const {
+    data: metrics = {
+      totalConsultations: 0,
+      waitingConsultations: 0,
+      resolvedConsultations: 0,
+      totalSoilTests: 0,
+      pendingSoilTests: 0,
+      completedSoilTests: 0,
+    },
+    refetch: refetchMetrics,
+  } = useGetExpertOverviewMetricsQuery();
 
-  // 2. Live Soil Tests
-  const { data: soilTests = [] } = useGetSoilTestsQuery(undefined, {
-    pollingInterval: 5000,
-  });
+  // 2. Dedicated Recent Farmer Consultations (Latest 6 from /expert/overview/recent-consultations)
+  const {
+    data: recentConsultations = [],
+    isLoading: isLoadingConsultations,
+    refetch: refetchConsultations,
+  } = useGetExpertRecentConsultationsQuery();
 
-  // Consultation stats
-  const waitingConsultations = consultations.filter((c) => c.status === 'Waiting for Reply').length;
-  const resolvedConsultations = consultations.filter((c) => c.status === 'Resolved').length;
+  // 3. Dedicated Recent Farmland Soil Test Bookings (Latest 6 from /expert/overview/recent-soil-tests)
+  const {
+    data: recentSoilTests = [],
+    isLoading: isLoadingSoilTests,
+    refetch: refetchSoilTests,
+  } = useGetExpertRecentSoilTestsQuery();
 
-  // Soil test stats
-  const pendingSoilTests = soilTests.filter((s) => s.status !== 'Completed').length;
-  const completedSoilTests = soilTests.filter((s) => s.status === 'Completed').length;
+  const handleRefreshAll = () => {
+    refetchMetrics();
+    refetchConsultations();
+    refetchSoilTests();
+  };
 
   return (
     <div className="w-full font-['Inter'] flex flex-col gap-6 animate-in fade-in duration-200">
@@ -48,7 +65,7 @@ export const ExpertOverview: React.FC = () => {
               Verified Agricultural Specialist
             </span>
             <span className="text-xs text-emerald-200/70 hidden sm:inline">
-              • KrishiKunjo AgroAi Network
+              | KrishiKunjo AgroAi Network
             </span>
           </div>
 
@@ -61,40 +78,37 @@ export const ExpertOverview: React.FC = () => {
           </p>
         </div>
 
-        {/* Quick Action Navigation */}
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/expert/consultations')}
-            className="px-4 py-2.5 rounded-xl bg-white text-[#0E4F5A] hover:bg-emerald-50 text-xs font-bold flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+            onClick={handleRefreshAll}
+            className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-white/20"
+            title="Refresh Overview Data"
           >
-            <MessageSquarePlus className="w-4 h-4" />
-            <span>Farmer Support Desk</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <RefreshCw className="w-4 h-4" />
+            <span>Refresh</span>
           </button>
 
           <button
             type="button"
-            onClick={() => navigate('/expert/soil-tests')}
-            className="px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
+            onClick={() => navigate("/expert/consultations")}
+            className="px-5 py-2.5 rounded-xl bg-[#CBFF54] hover:bg-[#b5f03d] text-[#0E3128] font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap"
           >
-            <FlaskConical className="w-4 h-4 text-emerald-300" />
-            <span>Soil Test Support</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            Open Live Support Desk
           </button>
         </div>
       </div>
 
-      {/* 2. Key Metric Cards */}
+      {/* 2. Top Metric KPI Cards (Driven by Dedicated Metrics API) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Farmer Inquiries Awaiting Reply */}
-        <div 
-          onClick={() => navigate('/expert/consultations')}
+        {/* Card 1: Urgent Consultation Inquiries */}
+        <div
+          onClick={() => navigate("/expert/consultations")}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-[#0E4F5A] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Farmer Inquiries
+              Farmer Inquiries Pending
             </span>
             <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
               <MessageSquarePlus className="w-5 h-5" />
@@ -102,25 +116,25 @@ export const ExpertOverview: React.FC = () => {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900">{waitingConsultations}</span>
+              <span className="text-2xl font-bold text-slate-900">{metrics.waitingConsultations}</span>
               <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
-                Needs Advice
+                Needs Reply
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Total {consultations.length} inquiries in queue
+              Active tickets waiting for expert response
             </p>
           </div>
         </div>
 
         {/* Card 2: Consultations Resolved */}
-        <div 
-          onClick={() => navigate('/expert/consultations')}
+        <div
+          onClick={() => navigate("/expert/consultations")}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-emerald-600 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Prescriptions Dispensed
+              Inquiries Resolved
             </span>
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5" />
@@ -128,20 +142,20 @@ export const ExpertOverview: React.FC = () => {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900">{resolvedConsultations}</span>
+              <span className="text-2xl font-bold text-slate-900">{metrics.resolvedConsultations}</span>
               <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                Resolved
+                Completed
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Farmers assisted with crop protection
+              {metrics.totalConsultations} Total all-time consultations
             </p>
           </div>
         </div>
 
-        {/* Card 3: Soil Tests Pending Lab Work */}
-        <div 
-          onClick={() => navigate('/expert/soil-tests')}
+        {/* Card 3: Soil Samples In Lab */}
+        <div
+          onClick={() => navigate("/expert/soil-tests")}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-blue-600 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
@@ -154,20 +168,20 @@ export const ExpertOverview: React.FC = () => {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900">{pendingSoilTests}</span>
+              <span className="text-2xl font-bold text-slate-900">{metrics.pendingSoilTests}</span>
               <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
                 In Testing
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Farmland samples being analyzed
+              Farmland samples being analyzed in lab
             </p>
           </div>
         </div>
 
         {/* Card 4: Soil Reports Published */}
-        <div 
-          onClick={() => navigate('/expert/soil-tests')}
+        <div
+          onClick={() => navigate("/expert/soil-tests")}
           className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:border-purple-600 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
@@ -180,21 +194,21 @@ export const ExpertOverview: React.FC = () => {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900">{completedSoilTests}</span>
+              <span className="text-2xl font-bold text-slate-900">{metrics.completedSoilTests}</span>
               <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md">
                 Certified
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Downloadable PDFs delivered to farmers
+              {metrics.totalSoilTests} Total soil test bookings
             </p>
           </div>
         </div>
       </div>
 
-      {/* 3. Split Recent Activity Queues */}
+      {/* 3. Split Recent Activity Queues (Latest 6 each from dedicated APIs) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: Recent Farmer Support Tickets */}
+        {/* Left Column: Recent Farmer Consultations (Latest 6) */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
@@ -204,65 +218,76 @@ export const ExpertOverview: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Recent Farmer Consultations</h3>
-                  <p className="text-[11px] text-slate-400">Crop diseases & pest emergencies</p>
+                  <p className="text-[11px] text-slate-400">Latest 6 inquiries from farmers</p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/expert/consultations')}
+                onClick={() => navigate("/expert/consultations")}
                 className="text-xs font-semibold text-[#0E4F5A] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 View Support Desk <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="space-y-2.5">
-              {consultations.slice(0, 4).map((ticket) => (
-                <div
-                  key={ticket.id}
-                  onClick={() => navigate('/expert/consultations')}
-                  className="p-3 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50/60 transition-all cursor-pointer flex items-center justify-between gap-3 text-xs"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-mono font-bold text-[#0E4F5A] text-[11px]">
-                        {ticket.ticketNumber}
-                      </span>
-                      {ticket.crop && (
-                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded-md">
-                          {ticket.crop}
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-semibold text-slate-800 truncate">
-                      {ticket.subject}
-                    </p>
-                  </div>
-
-                  <span
-                    className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      ticket.status === 'Resolved'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
+            {isLoadingConsultations && recentConsultations.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">Loading consultations...</div>
+            ) : recentConsultations.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">No consultation inquiries yet.</div>
+            ) : (
+              <div className="space-y-2.5">
+                {recentConsultations.slice(0, 6).map((ticket: any) => (
+                  <div
+                    key={ticket.id}
+                    onClick={() => navigate("/expert/consultations")}
+                    className="p-3 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50/60 transition-all cursor-pointer flex items-center justify-between gap-3 text-xs"
                   >
-                    {ticket.status}
-                  </span>
-                </div>
-              ))}
-            </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="font-mono font-bold text-[#0E4F5A] text-[11px]">
+                          {ticket.ticketNumber}
+                        </span>
+                        {ticket.crop && (
+                          <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded-md">
+                            {ticket.crop}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-slate-400 font-normal">
+                          {ticket.farmerName}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-slate-800 truncate">
+                        {ticket.subject}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`shrink-0 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                        ticket.status === "Resolved"
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          : ticket.status === "Open"
+                          ? "bg-blue-100 text-blue-800 border border-blue-300"
+                          : "bg-amber-100 text-amber-800 border border-amber-300"
+                      }`}
+                    >
+                      {ticket.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <button
             type="button"
-            onClick={() => navigate('/expert/consultations')}
+            onClick={() => navigate("/expert/consultations")}
             className="w-full mt-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer text-center"
           >
-            Open Full Support Desk ({consultations.length} Total)
+            Open Full Support Desk ({metrics.totalConsultations} Total)
           </button>
         </div>
 
-        {/* Right Column: Recent Soil Diagnostic Bookings */}
+        {/* Right Column: Recent Farmland Soil Test Bookings (Latest 6) */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
@@ -272,61 +297,67 @@ export const ExpertOverview: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Farmland Soil Test Bookings</h3>
-                  <p className="text-[11px] text-slate-400">Doorstep sample pickup & lab diagnostic</p>
+                  <p className="text-[11px] text-slate-400">Latest 6 soil tests from farmers</p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/expert/soil-tests')}
+                onClick={() => navigate("/expert/soil-tests")}
                 className="text-xs font-semibold text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 View Soil Desk <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="space-y-2.5">
-              {soilTests.slice(0, 4).map((test) => (
-                <div
-                  key={test.id}
-                  onClick={() => navigate('/expert/soil-tests')}
-                  className="p-3 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50/60 transition-all cursor-pointer flex items-center justify-between gap-3 text-xs"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-mono font-bold text-[#0E4F5A] text-[11px]">
-                        {test.id}
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-medium">
-                        {test.farmerName} • {test.district}
-                      </span>
-                    </div>
-                    <p className="font-semibold text-slate-800 truncate">
-                      {test.targetCrop} ({test.landArea})
-                    </p>
-                  </div>
-
-                  <span
-                    className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      test.status === 'Completed'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : test.status === 'Lab Testing'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
+            {isLoadingSoilTests && recentSoilTests.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">Loading soil tests...</div>
+            ) : recentSoilTests.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">No soil test bookings yet.</div>
+            ) : (
+              <div className="space-y-2.5">
+                {recentSoilTests.slice(0, 6).map((test: any) => (
+                  <div
+                    key={test.id}
+                    onClick={() => navigate("/expert/soil-tests")}
+                    className="p-3 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50/60 transition-all cursor-pointer flex items-center justify-between gap-3 text-xs"
                   >
-                    {test.status}
-                  </span>
-                </div>
-              ))}
-            </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="font-mono font-bold text-[#0E4F5A] text-[11px]">
+                          {test.id}
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          {test.farmerName} | {test.district}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-slate-800 truncate">
+                        {test.targetCrop} ({test.landArea}) - {test.packageName}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`shrink-0 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                        test.status === "Completed"
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          : test.status === "Lab Testing"
+                          ? "bg-blue-100 text-blue-800 border border-blue-300"
+                          : "bg-amber-100 text-amber-800 border border-amber-300"
+                      }`}
+                    >
+                      {test.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <button
             type="button"
-            onClick={() => navigate('/expert/soil-tests')}
+            onClick={() => navigate("/expert/soil-tests")}
             className="w-full mt-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer text-center"
           >
-            Open Soil Testing Desk ({soilTests.length} Total)
+            Open Soil Testing Desk ({metrics.totalSoilTests} Total)
           </button>
         </div>
       </div>

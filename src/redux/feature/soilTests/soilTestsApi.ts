@@ -48,6 +48,17 @@ export const soilTestsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['SoilTest'],
     }),
+
+    deleteSoilTest: builder.mutation<
+      { success: boolean; message: string },
+      string
+    >({
+      query: (id) => ({
+        url: `/soil-tests/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['SoilTest'],
+    }),
   }),
 });
 
@@ -56,4 +67,5 @@ export const {
   useGetSoilTestByIdQuery,
   useUpdateSoilTestStatusMutation,
   usePublishSoilReportMutation,
+  useDeleteSoilTestMutation,
 } = soilTestsApi;

@@ -12,11 +12,14 @@ import {
   User,
   ShieldCheck,
   Image as ImageIcon,
+  Trash2,
 } from 'lucide-react';
 import {
   useGetConsultationsQuery,
   useSendConsultationMessageMutation,
   useUpdateConsultationStatusMutation,
+  useMarkConsultationSeenMutation,
+  useDeleteConsultationMutation,
   useAppSelector,
 } from '../../../redux';
 import type {
@@ -50,7 +53,8 @@ export const FarmerSupportDesk: React.FC = () => {
 
   const [sendConsultationMessage, { isLoading: isSending }] = useSendConsultationMessageMutation();
   const [updateConsultationStatus, { isLoading: isUpdatingStatus }] = useUpdateConsultationStatusMutation();
-
+  const [markConsultationSeen] = useMarkConsultationSeenMutation();
+  const [deleteConsultation] = useDeleteConsultationMutation();
   // 2. Local State
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'WAITING' | 'RESOLVED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,12 +64,41 @@ export const FarmerSupportDesk: React.FC = () => {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+  const seenTicketsRef = useRef<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
+  // Auto-select first ticket if none selected
+  useEffect(() => {
+    if (!selectedTicketId && tickets.length > 0) {
+      setSelectedTicketId(tickets[0].id);
+    }
+  }, [tickets, selectedTicketId]);
+
+  // Selected Ticket
+  const activeTicket: ConsultationTicket | undefined = useMemo(() => {
+    if (!tickets || tickets.length === 0) return undefined;
+    return tickets.find((t) => t.id === selectedTicketId) || tickets[0];
+  }, [tickets, selectedTicketId]);
+
+  // Auto-mark ticket as Open when expert views it for the 1st time (no repeated status changes)
+  useEffect(() => {
+    if (
+      activeTicket &&
+      activeTicket.status === 'Waiting for Reply' &&
+      !seenTicketsRef.current.has(activeTicket.id)
+    ) {
+      seenTicketsRef.current.add(activeTicket.id);
+      markConsultationSeen(activeTicket.id)
+        .unwrap()
+        .catch((err) => console.error('Error marking consultation as seen:', err));
+    }
+  }, [activeTicket?.id, activeTicket?.status, markConsultationSeen]);
+
   // Initialize Real-time Socket.io connection for Expert
   useEffect(() => {
-    const socket = io('http://localhost:3000', {
+    const socketUrl = (import.meta as any).env?.VITE_SOCKET_URL || 'http://localhost:3000';
+    const socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
     });
     socketRef.current = socket;
@@ -89,6 +122,10 @@ export const FarmerSupportDesk: React.FC = () => {
       refetch();
     });
 
+    socket.on('ticket_deleted', () => {
+      refetch();
+    });
+
     return () => {
       socket.disconnect();
     };
@@ -101,23 +138,33 @@ export const FarmerSupportDesk: React.FC = () => {
     }
   }, [selectedTicketId]);
 
-  // Auto-select first ticket if none selected
-  useEffect(() => {
-    if (!selectedTicketId && tickets.length > 0) {
-      setSelectedTicketId(tickets[0].id);
-    }
-  }, [tickets, selectedTicketId]);
-
-  // Selected Ticket
-  const activeTicket: ConsultationTicket | undefined = useMemo(() => {
-    if (!tickets || tickets.length === 0) return undefined;
-    return tickets.find((t) => t.id === selectedTicketId) || tickets[0];
-  }, [tickets, selectedTicketId]);
-
   // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeTicket?.messages]);
+
+  // Handle Delete Ticket by Expert
+  const handleDeleteTicket = async (ticketId: string, ticketNumber: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete ticket #${ticketNumber}? This will remove all associated messages.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteConsultation(ticketId).unwrap();
+      setFeedbackMessage(`Ticket #${ticketNumber} deleted successfully.`);
+      setTimeout(() => setFeedbackMessage(null), 3000);
+      if (selectedTicketId === ticketId) {
+        const remaining = tickets.filter((t) => t.id !== ticketId);
+        setSelectedTicketId(remaining.length > 0 ? remaining[0].id : null);
+      }
+      refetch();
+    } catch (err) {
+      console.error('Failed to delete ticket:', err);
+      alert('Failed to delete consultation ticket. Please try again.');
+    }
+  };
 
   // Filtered Tickets
   const filteredTickets = useMemo(() => {
@@ -163,15 +210,7 @@ export const FarmerSupportDesk: React.FC = () => {
     };
 
     try {
-      await sendConsultationMessage({
-        ticketId: activeTicket.id,
-        sender: 'expert',
-        senderName: expertName,
-        senderRole: expertRole,
-        text: replyText.trim(),
-        attachments: previewImage ? [previewImage] : [],
-        markResolved: markResolvedOnSend,
-      }).unwrap();
+      await sendConsultationMessage(payload).unwrap();
 
       setReplyText('');
       setFeedbackMessage('Agricultural advice successfully transmitted to farmer!');
@@ -397,6 +436,14 @@ export const FarmerSupportDesk: React.FC = () => {
                         >
                           {ticket.status}
                         </span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteTicket(ticket.id, ticket.ticketNumber, e)}
+                          className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                          title="Delete ticket"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
 
@@ -453,8 +500,17 @@ export const FarmerSupportDesk: React.FC = () => {
                   </h2>
                 </div>
 
-                {/* Status Toggle Button */}
+                {/* Status Toggle Button & Delete */}
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteTicket(activeTicket.id, activeTicket.ticketNumber)}
+                    className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 flex items-center gap-1.5 transition-all cursor-pointer"
+                    title="Delete this consultation"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Delete</span>
+                  </button>
                   <button
                     type="button"
                     onClick={handleToggleStatus}

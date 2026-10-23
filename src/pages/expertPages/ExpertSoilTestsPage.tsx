@@ -12,6 +12,7 @@ import {
   Trash2,
   Eye,
   Check,
+  Edit2,
   X,
   Sparkles,
   TrendingUp,
@@ -20,6 +21,7 @@ import {
   useGetSoilTestsQuery,
   useUpdateSoilTestStatusMutation,
   usePublishSoilReportMutation,
+  useDeleteSoilTestMutation,
   type SoilTestRequest,
   type SoilTestStatus,
   type SoilParameter,
@@ -81,6 +83,7 @@ export const ExpertSoilTestsPage: React.FC = () => {
 
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateSoilTestStatusMutation();
   const [publishReport, { isLoading: isPublishing }] = usePublishSoilReportMutation();
+  const [deleteSoilTest, { isLoading: isDeleting }] = useDeleteSoilTestMutation();
 
   // 2. Local State
   const [activeTab, setActiveTab] = useState<'ALL' | SoilTestStatus>('ALL');
@@ -158,6 +161,18 @@ export const ExpertSoilTestsPage: React.FC = () => {
     } catch (err: any) {
       console.error('Publish error:', err);
       showToast(err?.data?.message || 'Failed to publish lab report. Please check server.');
+    }
+  };
+
+  // Handle Delete Request
+  const handleDeleteRequest = async (req: SoilTestRequest) => {
+    if (window.confirm(`Are you sure you want to permanently delete soil test request #${req.id}? This will remove it from the database.`)) {
+      try {
+        await deleteSoilTest(req.id).unwrap();
+        showToast(`Soil test request #${req.id} deleted successfully.`);
+      } catch (err: any) {
+        showToast(err?.data?.message || 'Failed to delete request.');
+      }
     }
   };
 
@@ -497,6 +512,16 @@ export const ExpertSoilTestsPage: React.FC = () => {
                             <>
                               <button
                                 type="button"
+                                onClick={() => handleOpenPublishModal(req)}
+                                className="px-2.5 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                                title="Edit Published Lab Report"
+                              >
+                                <Edit2 className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Edit Result</span>
+                              </button>
+
+                              <button
+                                type="button"
                                 onClick={() => setViewingRequest(req)}
                                 className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                                 title="View Lab Report"
@@ -505,6 +530,15 @@ export const ExpertSoilTestsPage: React.FC = () => {
                                 <span>Report</span>
                               </button>
 
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteRequest(req)}
+                                disabled={isDeleting}
+                                title="Delete Request"
+                                className="p-1.5 rounded-lg border border-slate-200 hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => handleDownloadPdf(req)}
@@ -516,14 +550,25 @@ export const ExpertSoilTestsPage: React.FC = () => {
                               </button>
                             </>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleOpenPublishModal(req)}
-                              className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                            >
-                              <FlaskConical className="w-3.5 h-3.5" />
-                              <span>Publish Result</span>
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteRequest(req)}
+                                disabled={isDeleting}
+                                title="Delete Request"
+                                className="p-1.5 rounded-lg border border-slate-200 hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenPublishModal(req)}
+                                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                              >
+                                <FlaskConical className="w-3.5 h-3.5" />
+                                <span>Publish Result</span>
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -544,10 +589,10 @@ export const ExpertSoilTestsPage: React.FC = () => {
             <div className="p-5 border-b border-slate-200 bg-gradient-to-r from-[#062E35] to-[#0E4F5A] text-white flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-300 bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-400/30">
-                  {publishingRequest.id} • Lab Result Publishing
+                  {publishingRequest.id} • {publishingRequest.status === 'Completed' ? 'Edit Published Report' : 'Lab Result Publishing'}
                 </span>
                 <h3 className="text-lg font-bold text-white mt-1">
-                  Publish Soil Diagnostic Report for {publishingRequest.farmerName}
+                  {publishingRequest.status === 'Completed' ? 'Edit & Update Soil Report' : 'Publish Soil Diagnostic Report'} for {publishingRequest.farmerName}
                 </h3>
                 <p className="text-xs text-emerald-100/70">
                   Target Crop: {publishingRequest.targetCrop} • Area: {publishingRequest.landArea} ({publishingRequest.upazila}, {publishingRequest.district})

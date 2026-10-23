@@ -79,6 +79,31 @@ export const expertsApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => ['Expert', { type: 'Expert', id }],
     }),
 
+    getExpertOverviewMetrics: builder.query<{
+      totalConsultations: number;
+      waitingConsultations: number;
+      resolvedConsultations: number;
+      totalSoilTests: number;
+      pendingSoilTests: number;
+      completedSoilTests: number;
+    }, void>({
+      query: () => '/expert/overview/metrics',
+      transformResponse: (res: any) => res?.data || res,
+      providesTags: ['Expert', 'Consultation', 'SoilTest'],
+    }),
+
+    getExpertRecentConsultations: builder.query<any[], void>({
+      query: () => '/expert/overview/recent-consultations',
+      transformResponse: (res: any) => (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []),
+      providesTags: ['Consultation'],
+    }),
+
+    getExpertRecentSoilTests: builder.query<any[], void>({
+      query: () => '/expert/overview/recent-soil-tests',
+      transformResponse: (res: any) => (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []),
+      providesTags: ['SoilTest'],
+    }),
+
     deleteExpert: builder.mutation<DeleteExpertResponse, string>({
       query: (id) => ({
         url: `/experts/${id}`,
@@ -97,4 +122,7 @@ export const {
   useUpdateExpertMutation,
   useUpdateExpertStatusMutation,
   useDeleteExpertMutation,
+  useGetExpertOverviewMetricsQuery,
+  useGetExpertRecentConsultationsQuery,
+  useGetExpertRecentSoilTestsQuery,
 } = expertsApi;
