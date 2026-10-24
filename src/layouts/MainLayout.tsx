@@ -56,7 +56,7 @@ export const MainLayout = () => {
   ) as AdminTab;
 
   const activeVendorTab: VendorTab = (
-    ['overview', 'product', 'orders', 'support', 'settings'].includes(activeTabSlug)
+    ['overview', 'product', 'orders', 'support', 'admin-support', 'settings'].includes(activeTabSlug)
       ? activeTabSlug
       : 'overview'
   ) as VendorTab;

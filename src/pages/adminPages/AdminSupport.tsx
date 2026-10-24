@@ -6,228 +6,75 @@ import {
   SupportReplyDrawer, 
   SupportDeleteModal 
 } from '../../components/adminComponents/support';
-
-export interface TicketMessage {
-  id: string;
-  author: string;
-  authorInitials?: string;
-  time: string;
-  text: string;
-  isSelf?: boolean;
-  attachmentName?: string;
-}
-
-export interface SupportTicket {
-  id: string;
-  sender: string;
-  email: string;
-  role: 'Parent' | 'Nanny';
-  plan?: string;
-  subject: string;
-  fullMessage: string;
-  status: 'Open' | 'Waiting for Reply' | 'Resolved';
-  submittedTime: string;
-  messages: TicketMessage[];
-}
+import {
+  vendorAdminSupportService,
+  type VendorSupportTicket,
+  type TicketStatus,
+  type SupportAttachment,
+  markTicketAsSeen
+} from '../../services/vendorAdminSupportService';
 
 export const AdminSupport = () => {
-  // Realistic tickets matching the Figma design table & reply drawer
-  const [tickets, setTickets] = useState<SupportTicket[]>([
-    {
-      id: 'TKT-2841',
-      sender: "Sarah O'Brien",
-      email: 'sarah.ahmed@gmail.com',
-      role: 'Parent',
-      plan: 'Monthly',
-      subject: "Can't invite my nanny",
-      fullMessage: "I'm trying to invite my nanny, but the invitation doesn't seem to be going through. Could you please help?",
-      status: 'Open',
-      submittedTime: '10 min ago',
-      messages: [
-        {
-          id: 'm1',
-          author: "Sarah O'Brien",
-          authorInitials: 'SO',
-          time: '10:32 AM',
-          text: "I'm trying to invite my nanny, but the invitation doesn't seem to be going through. Could you please help?",
-          isSelf: false
-        },
-        {
-          id: 'm2',
-          author: "Sarah O'Brien",
-          authorInitials: 'SO',
-          time: '10:32 AM',
-          text: "I'm trying to invite my nanny, but the invitation doesn't seem to be going through. Could you please help?",
-          isSelf: true
-        },
-        {
-          id: 'm3',
-          author: "Sarah O'Brien",
-          authorInitials: 'SO',
-          time: '10:32 AM',
-          text: "I'm trying to invite my nanny, but the invitation doesn't seem to be going through. Could you please help?",
-          isSelf: false
-        },
-        {
-          id: 'm4',
-          author: "Sarah O'Brien",
-          authorInitials: 'SO',
-          time: '10:32 AM',
-          text: "I'm trying to invite my nanny, but the invitation doesn't seem to be going through. Could you please help?",
-          isSelf: true
-        }
-      ]
-    },
-    {
-      id: 'TKT-2840',
-      sender: 'Sarah Ahmed',
-      email: 'sarah.ahmed@gmail.com',
-      role: 'Parent',
-      plan: 'Monthly',
-      subject: "Can't invite my nanny to family care group",
-      fullMessage: "Following up on my previous query: she tried creating an account first, but still gets a permissions error on the onboarding step.",
-      status: 'Waiting for Reply',
-      submittedTime: '10 min ago',
-      messages: [
-        {
-          id: 'm1',
-          author: 'Sarah Ahmed',
-          authorInitials: 'SA',
-          time: '09:15 AM',
-          text: "Following up on my previous query: she tried creating an account first, but still gets a permissions error on the onboarding step.",
-          isSelf: false
-        },
-        {
-          id: 'm2',
-          author: 'Support Team',
-          authorInitials: 'ST',
-          time: '09:40 AM',
-          text: "We checked your account permissions. Could you please check if she has accepted the invite code via SMS?",
-          isSelf: true
-        }
-      ]
-    },
-    {
-      id: 'TKT-2839',
-      sender: 'David Kelly',
-      email: 'david.kelly@lifestyle.ie',
-      role: 'Parent',
-      plan: 'Annual',
-      subject: 'Milestone tracking not updating in dashboard',
-      fullMessage: 'My child reached their 9-month motor milestone, but the timeline screen is still showing 6-month status even after refreshing.',
-      status: 'Open',
-      submittedTime: '25 min ago',
-      messages: [
-        {
-          id: 'm1',
-          author: 'David Kelly',
-          authorInitials: 'DK',
-          time: '10:15 AM',
-          text: 'My child reached their 9-month motor milestone, but the timeline screen is still showing 6-month status even after refreshing.',
-          isSelf: false
-        }
-      ]
-    },
-    {
-      id: 'TKT-2838',
-      sender: 'Chloe Gallagher',
-      email: 'chloe.g@gmail.com',
-      role: 'Nanny',
-      plan: 'Monthly',
-      subject: 'Weekly activity log sync delay with parent account',
-      fullMessage: 'The order and inventory sync from my vendor dashboard yesterday was delayed on the customer Krisikunjo app.',
-      status: 'Resolved',
-      submittedTime: '45 min ago',
-      messages: [
-        {
-          id: 'm1',
-          author: 'Chloe Gallagher',
-          authorInitials: 'CG',
-          time: '08:20 AM',
-          text: 'The order and inventory sync from my vendor dashboard yesterday was delayed on the customer Krisikunjo app.',
-          isSelf: false
-        },
-        {
-          id: 'm2',
-          author: 'Krisikunjo Admin',
-          authorInitials: 'KA',
-          time: '08:50 AM',
-          text: 'This was due to a temporary background cache sync. We triggered a manual resync and orders are now synced.',
-          isSelf: true
-        }
-      ]
-    },
-    {
-      id: 'TKT-2835',
-      sender: 'Liam O’Connor',
-      email: 'liam.oc@outlook.ie',
-      role: 'Parent',
-      plan: 'Annual',
-      subject: 'Inquiry regarding annual subscription billing receipt',
-      fullMessage: 'Could you please send me a formal VAT invoice for our annual family subscription? Our accountant requires it for childcare tax documentation.',
-      status: 'Open',
-      submittedTime: '1 hr ago',
-      messages: [
-        {
-          id: 'm1',
-          author: 'Liam O’Connor',
-          authorInitials: 'LO',
-          time: '01:10 PM',
-          text: 'Could you please send me a formal VAT invoice for our annual family subscription? Our accountant requires it for childcare tax documentation.',
-          isSelf: false
-        }
-      ]
-    },
-    {
-      id: 'TKT-2830',
-      sender: 'Siobhán Murphy',
-      email: 'siobhan.nanny@dublincare.ie',
-      role: 'Nanny',
-      plan: 'Monthly',
-      subject: 'Police clearance and CPR certificate upload assistance',
-      fullMessage: 'I uploaded my updated First Aid certification yesterday morning. Could you let me know if it has been verified yet?',
-      status: 'Waiting for Reply',
-      submittedTime: '3 hrs ago',
-      messages: [
-        {
-          id: 'm1',
-          author: 'Siobhán Murphy',
-          authorInitials: 'SM',
-          time: '11:00 AM',
-          text: 'I uploaded my updated First Aid certification yesterday morning. Could you let me know if it has been verified yet?',
-          isSelf: false
-        },
-        {
-          id: 'm2',
-          author: 'Admin Support',
-          authorInitials: 'ET',
-          time: '11:45 AM',
-          text: 'Hi Siobhán, our compliance team is currently reviewing your document. Verification usually completes within 24 hours.',
-          isSelf: true
-        }
-      ]
-    }
-  ]);
+  const [tickets, setTickets] = useState<VendorSupportTicket[]>([]);
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'All' | 'Open' | 'Waiting for Reply' | 'Resolved'>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Open' | 'Resolved'>('All');
 
   // Interactive drawer / modal states
-  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<VendorSupportTicket | null>(null);
   const [replyInput, setReplyInput] = useState('');
-  const [attachedFile, setAttachedFile] = useState<string | null>(null);
-  const [ticketToDelete, setTicketToDelete] = useState<SupportTicket | null>(null);
+  const [attachedFile, setAttachedFile] = useState<SupportAttachment | null>(null);
+  const [ticketToDelete, setTicketToDelete] = useState<VendorSupportTicket | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto scroll to bottom when messages update in drawer
+  // Load tickets and subscribe to real-time changes
+  const loadTickets = () => {
+    const list = vendorAdminSupportService.getTickets();
+    setTickets(list);
+    setSelectedTicket((prev) => {
+      if (!prev) return null;
+      const refreshed = list.find((t) => t.id === prev.id);
+      return refreshed
+        ? {
+            ...refreshed,
+            messages: Array.isArray(refreshed.messages) ? refreshed.messages : [],
+          }
+        : prev;
+    });
+  };
+
+  useEffect(() => {
+    loadTickets();
+    vendorAdminSupportService.syncFromBackend().then(() => loadTickets());
+    const unsubscribe = vendorAdminSupportService.subscribe(() => {
+      loadTickets();
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Join/leave ticket room via socket & mark seen
+  useEffect(() => {
+    if (selectedTicket?.id) {
+      vendorAdminSupportService.joinTicketRoom(selectedTicket.id);
+      markTicketAsSeen(selectedTicket.id, 'Admin');
+    }
+    return () => {
+      if (selectedTicket?.id) {
+        vendorAdminSupportService.leaveTicketRoom(selectedTicket.id);
+      }
+    };
+  }, [selectedTicket?.id]);
+
+  // Auto scroll to bottom when messages update
   useEffect(() => {
     if (selectedTicket) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [selectedTicket?.messages]);
+  }, [selectedTicket?.id, selectedTicket?.messages?.length]);
 
   // Close drawer on Escape key
   useEffect(() => {
@@ -245,81 +92,85 @@ export const AdminSupport = () => {
   }, [selectedTicket, ticketToDelete]);
 
   // Dynamic counts for top cards
-  const openCount = tickets.filter(t => t.status === 'Open').length;
-  const waitingCount = tickets.filter(t => t.status === 'Waiting for Reply').length;
-  const resolvedCount = tickets.filter(t => t.status === 'Resolved').length;
+  const totalCount = tickets.length;
+  const openCount = tickets.filter((t) => t.status === 'Open').length;
+  
+  const resolvedCount = tickets.filter((t) => t.status === 'Resolved').length;
 
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(' ');
+  const getInitials = (name?: string) => {
+    if (!name || typeof name !== 'string') return 'VN';
+    const parts = name.trim().split(' ').filter(Boolean);
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return parts[0]?.slice(0, 2).toUpperCase() || 'SO';
+    return parts[0]?.slice(0, 2).toUpperCase() || 'VN';
   };
 
   // Filtered tickets
   const filteredTickets = tickets.filter((t) => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = t.sender.toLowerCase().includes(term) ||
-                          t.email.toLowerCase().includes(term) ||
-                          t.subject.toLowerCase().includes(term);
-    const matchesTab = activeTab === 'All' || t.status === activeTab;
-    return matchesSearch && matchesTab;
+    const term = searchTerm.toLowerCase().trim();
+    const matchesSearch =
+      !term ||
+      (t.id && t.id.toLowerCase().includes(term)) ||
+      (t.vendorName && t.vendorName.toLowerCase().includes(term)) ||
+      (t.storeName && t.storeName.toLowerCase().includes(term)) ||
+      (t.subject && t.subject.toLowerCase().includes(term)) ||
+      (t.category && t.category.toLowerCase().includes(term)) ||
+      (t.fullMessage && t.fullMessage.toLowerCase().includes(term));
+
+    const matchesCategory =
+      selectedCategory === 'All' || t.category === selectedCategory;
+
+    const matchesStatus =
+      activeTab === 'All' || t.status === activeTab;
+
+    return Boolean(matchesSearch && matchesCategory && matchesStatus);
   });
 
-  // Handle reply submit
-  const handleSendReply = (e?: React.FormEvent) => {
+  // Handle Send Reply as Admin
+  const handleSendReply = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!selectedTicket) return;
     if (!replyInput.trim() && !attachedFile) return;
-    if (!selectedTicket) return;
 
-    const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const newMsg: TicketMessage = {
-      id: 'm_' + Date.now(),
-      author: selectedTicket.sender,
-      authorInitials: getInitials(selectedTicket.sender),
-      time: currentTime,
-      text: replyInput.trim() || (attachedFile ? `Attached: ${attachedFile}` : ''),
-      isSelf: true,
-      attachmentName: attachedFile || undefined
-    };
-
-    const newMessages = [...selectedTicket.messages, newMsg];
-    const newStatus = selectedTicket.status === 'Resolved' ? 'Open' : 'Waiting for Reply';
-
-    const updatedTickets = tickets.map((t) => {
-      if (t.id === selectedTicket.id) {
-        return {
-          ...t,
-          status: newStatus as SupportTicket['status'],
-          messages: newMessages
-        };
-      }
-      return t;
+    const updated = await vendorAdminSupportService.addReply(selectedTicket.id, {
+      author: 'Krisikunjo Admin Support',
+      authorRole: 'Admin',
+      authorInitials: 'AD',
+      text: replyInput.trim(),
+      attachmentName: attachedFile ? attachedFile.name : undefined,
+      attachmentUrl: attachedFile ? attachedFile.url : undefined,
+      attachmentType: attachedFile ? attachedFile.type : undefined
     });
 
-    setTickets(updatedTickets);
-    setSelectedTicket({
-      ...selectedTicket,
-      status: newStatus as SupportTicket['status'],
-      messages: newMessages
-    });
-
-    setReplyInput('');
-    setAttachedFile(null);
+    if (updated) {
+      setSelectedTicket(updated);
+      setReplyInput('');
+      setAttachedFile(null);
+    }
   };
 
-  // Toggle ticket status (Mark Resolved / Reopen)
-  const handleToggleResolved = () => {
+  // Handle direct status change
+  const handleStatusChange = async (newStatus: TicketStatus) => {
     if (!selectedTicket) return;
-    const nextStatus: SupportTicket['status'] = selectedTicket.status === 'Resolved' ? 'Open' : 'Resolved';
-
-    setTickets(tickets.map(t => t.id === selectedTicket.id ? { ...t, status: nextStatus } : t));
-    setSelectedTicket({ ...selectedTicket, status: nextStatus });
+    const updated = await vendorAdminSupportService.updateTicketStatus(selectedTicket.id, newStatus);
+    if (updated) {
+      setSelectedTicket(updated);
+    }
   };
 
-  // Confirm delete ticket
-  const handleConfirmDelete = () => {
+  // Toggle Resolved status
+  const handleToggleResolved = async () => {
+    if (!selectedTicket) return;
+    const nextStatus: TicketStatus = selectedTicket.status === 'Resolved' ? 'Open' : 'Resolved';
+    const updated = await vendorAdminSupportService.updateTicketStatus(selectedTicket.id, nextStatus);
+    if (updated) {
+      setSelectedTicket(updated);
+    }
+  };
+
+  // Delete ticket confirmation
+  const handleConfirmDelete = async () => {
     if (!ticketToDelete) return;
-    setTickets(tickets.filter(t => t.id !== ticketToDelete.id));
+    await vendorAdminSupportService.deleteTicket(ticketToDelete.id);
     if (selectedTicket?.id === ticketToDelete.id) {
       setSelectedTicket(null);
     }
@@ -328,41 +179,64 @@ export const AdminSupport = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setAttachedFile(file.name);
-    }
+    if (!file) return;
+
+    const isImg = file.type.startsWith('image/');
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const sizeFormatted =
+        file.size > 1024 * 1024
+          ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+          : `${Math.round(file.size / 1024)} KB`;
+
+      setAttachedFile({
+        name: file.name,
+        url: dataUrl,
+        type: isImg ? 'image' : 'file',
+        size: sizeFormatted
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   return (
-    <div className="flex flex-col gap-6 font-['Inter'] pb-16">
-      {/* 1. Header Section */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">
-            Support
+    <div className="p-6 md:p-8 w-full space-y-6 font-['Inter']">
+      {/* Page Header */}
+      <div>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+            Vendor Support & Helpdesk
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Review and respond to questions from parents and nannies.
-          </p>
+          <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+            Platform Helpdesk
+          </span>
         </div>
+        <p className="text-sm text-slate-500 mt-1">
+          Review, reply to, and resolve support tickets submitted by marketplace vendors.
+        </p>
       </div>
 
-      {/* 2. Top Metric Cards */}
+      {/* Top 4 Metrics Cards */}
       <SupportMetricsGrid
+        totalCount={totalCount}
         openCount={openCount}
-        waitingCount={waitingCount}
+        
         resolvedCount={resolvedCount}
       />
 
-      {/* 3. Filter Bar */}
+      {/* Filter and Search Bar */}
       <SupportFilters
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
       />
 
-      {/* 4. Support Tickets Table Container */}
+      {/* Tickets Table */}
       <SupportTable
         tickets={filteredTickets}
         getInitials={getInitials}
@@ -370,7 +244,7 @@ export const AdminSupport = () => {
         onDeleteTicket={(ticket) => setTicketToDelete(ticket)}
       />
 
-      {/* 5. Figma Slide-In Reply Drawer */}
+      {/* Sliding Reply Drawer */}
       <SupportReplyDrawer
         selectedTicket={selectedTicket}
         onClose={() => setSelectedTicket(null)}
@@ -384,9 +258,10 @@ export const AdminSupport = () => {
         setReplyInput={setReplyInput}
         handleSendReply={handleSendReply}
         handleToggleResolved={handleToggleResolved}
+        onStatusChange={handleStatusChange}
       />
 
-      {/* 6. Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       <SupportDeleteModal
         ticketToDelete={ticketToDelete}
         onCancel={() => setTicketToDelete(null)}

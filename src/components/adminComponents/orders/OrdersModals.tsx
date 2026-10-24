@@ -1,5 +1,5 @@
 import { Edit3, Ban, Trash2, X, MapPin, Truck } from 'lucide-react';
-import type { OrderItem, OrderStatus } from '../../../pages/adminPages/AdminOrders';
+import type { OrderItem } from '../../../pages/adminPages/AdminOrders';
 
 interface OrdersModalsProps {
   viewingOrder: OrderItem | null;
@@ -66,7 +66,7 @@ export const OrdersModals: React.FC<OrdersModalsProps> = ({
             <div>
               <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">Ordered Items</span>
               <div className="bg-slate-50 rounded-2xl border border-slate-100 p-3 flex flex-col gap-2">
-                {viewingOrder.items.map((item, idx) => (
+                {viewingOrder.items.map((item: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-200/50 last:border-none">
                     <div className="flex items-center gap-2">
                       <span className="w-5 h-5 rounded-md bg-white border border-slate-200 flex items-center justify-center font-bold text-[10px] text-slate-700">
@@ -164,13 +164,13 @@ export const OrdersModals: React.FC<OrdersModalsProps> = ({
                 </label>
                 <select
                   value={editingOrder.status}
-                  onChange={(e) => setEditingOrder({ ...editingOrder, status: e.target.value as OrderStatus })}
+                  onChange={(e) => setEditingOrder({ ...editingOrder, status: e.target.value as any })}
                   className="w-full p-3 rounded-xl border border-slate-200 text-sm text-slate-800 focus:outline-none focus:border-[#062E35] cursor-pointer"
                 >
+                  <option value="New">New</option>
                   <option value="Processing">Processing</option>
-                  <option value="In Transit">In Transit</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="On Hold">On Hold</option>
+                  <option value="Delivery Sent">Delivery Sent</option>
+                  <option value="Completed">Completed</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>
               </div>
@@ -244,11 +244,11 @@ export const OrdersModals: React.FC<OrdersModalsProps> = ({
             </div>
 
             <h3 className="text-xl font-bold text-slate-900 tracking-tight mb-2">
-              {orderToHold.status === 'On Hold' ? 'Release Order Hold?' : 'Place Order on Hold?'}
+              {(orderToHold.status as any) === 'On Hold' ? 'Release Order Hold?' : 'Place Order on Hold?'}
             </h3>
 
             <p className="text-sm text-slate-500 font-normal leading-relaxed mb-6 px-2">
-              {orderToHold.status === 'On Hold'
+              {(orderToHold.status as any) === 'On Hold'
                 ? `Order #${orderToHold.orderNumber} will be resumed for fulfillment.`
                 : `Placing #${orderToHold.orderNumber} on hold will pause dispatch until verification completes.`}
             </p>
@@ -267,11 +267,11 @@ export const OrdersModals: React.FC<OrdersModalsProps> = ({
                 onClick={() => handleToggleHold(orderToHold)}
                 className="w-full py-3 px-4 rounded-2xl text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer hover:opacity-90 active:scale-95"
                 style={{ 
-                  backgroundColor: orderToHold.status === 'On Hold' ? '#062E35' : '#7C3AED',
+                  backgroundColor: (orderToHold.status as any) === 'On Hold' ? '#062E35' : '#7C3AED',
                   borderRadius: '16px' 
                 }}
               >
-                {orderToHold.status === 'On Hold' ? 'Release Hold' : 'Confirm Hold'}
+                {(orderToHold.status as any) === 'On Hold' ? 'Release Hold' : 'Confirm Hold'}
               </button>
             </div>
           </div>

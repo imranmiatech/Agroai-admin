@@ -1,3 +1,5 @@
+export type OrderStatus = 'New' | 'Processing' | 'Delivery Sent' | 'Completed' | 'Cancelled';
+
 export interface OrderItemDetail {
   id: string;
   productId?: string | null;
@@ -27,7 +29,8 @@ export interface OrderRecord {
   notes?: string | null;
   paymentMethod: string;
   paymentStatus: string;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: OrderStatus | string;
+  rawStatus?: string;
   subtotal: number;
   deliveryFee: number;
   discount: number;

@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { 
-  VendorManageDeliveryView, 
   VendorOrderDetailView, 
   VendorOrdersListView 
 } from '../../components/vendorComponents/orders';
@@ -36,28 +35,24 @@ export interface VendorOrder {
   discount: string;
   noteFromParent?: string;
   confirmationRecipient?: string;
+  courierName?: string;
+  trackingNumber?: string;
 }
 
 function mapBackendStatusToVendorStatus(status: string): OrderStatus {
   const s = (status || '').toLowerCase();
-  if (s === 'processing') return 'Processing';
-  if (s === 'shipped') return 'Delivery Sent';
-  if (s === 'delivered') return 'Completed';
-  if (s === 'cancelled') return 'Cancelled';
-  return 'New'; // 'pending' or 'confirmed'
+  if (s === 'processing' || s === 'confirmed') return 'Processing';
+  if (s === 'delivery sent' || s === 'delivery_sent' || s === 'shipped' || s === 'in transit') return 'Delivery Sent';
+  if (s === 'completed' || s === 'delivered') return 'Completed';
+  if (s === 'cancelled' || s === 'canceled') return 'Cancelled';
+  return 'New';
 }
 
 export const VendorOrders = () => {
-  // Navigation views: 'list' | 'detail' | 'manage_delivery'
-  const [currentView, setCurrentView] = useState<'list' | 'detail' | 'manage_delivery'>('list');
+  // Navigation views: 'list' | 'detail'
+  const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'All' | OrderStatus>('All');
-
-  // Delivery Fee configuration state
-  const [baseFee, setBaseFee] = useState('0.00');
-  const [ratePerKm, setRatePerKm] = useState('2.50');
-  const [minDistance, setMinDistance] = useState('2.50');
-  const [deliverySavedNotice, setDeliverySavedNotice] = useState(false);
 
   // Current logged in vendor profile
   const { user } = useAppSelector((state) => state.auth);
@@ -107,6 +102,8 @@ export const VendorOrders = () => {
         discount: `৳${(o.discount || 0).toFixed(2)}`,
         noteFromParent: o.notes || undefined,
         confirmationRecipient: o.customerName,
+        courierName: o.courierName || undefined,
+        trackingNumber: o.trackingNumber || undefined,
       };
     });
   }, [rawOrders, vendorId]);
@@ -114,24 +111,43 @@ export const VendorOrders = () => {
   // Actions
   const handleAcceptOrder = async (orderId: string) => {
     try {
-      await updateOrderStatusMutation({ id: orderId, status: 'PROCESSING' }).unwrap();
+      await updateOrderStatusMutation({ id: orderId, status: 'Processing' }).unwrap();
     } catch (err) {
       console.error('Failed to accept order:', err);
     }
   };
 
-  const handleMarkDeliverySent = async (orderId: string) => {
+  const handleMarkDeliverySent = async (
+    orderId: string,
+    courierName?: string,
+    trackingNumber?: string
+  ) => {
     try {
-      await updateOrderStatusMutation({ id: orderId, status: 'SHIPPED' }).unwrap();
+      await updateOrderStatusMutation({
+        id: orderId,
+        status: 'Delivery Sent',
+        courierName,
+        trackingNumber,
+      }).unwrap();
     } catch (err) {
       console.error('Failed to mark delivery sent:', err);
     }
   };
 
-  const handleSaveDeliveryFee = (e: React.FormEvent) => {
-    e.preventDefault();
-    setDeliverySavedNotice(true);
-    setTimeout(() => setDeliverySavedNotice(false), 3000);
+  const handleMarkCompleted = async (orderId: string) => {
+    try {
+      await updateOrderStatusMutation({ id: orderId, status: 'Completed' }).unwrap();
+    } catch (err) {
+      console.error('Failed to mark completed:', err);
+    }
+  };
+
+  const handleChangeStatus = async (orderId: string, status: OrderStatus) => {
+    try {
+      await updateOrderStatusMutation({ id: orderId, status }).unwrap();
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    }
   };
 
   // Counts for Metric Cards & Filter Tabs
@@ -152,24 +168,7 @@ export const VendorOrders = () => {
     );
   }
 
-  // VIEW 1: MANAGE DELIVERY FEE
-  if (currentView === 'manage_delivery') {
-    return (
-      <VendorManageDeliveryView
-        onBack={() => setCurrentView('list')}
-        baseFee={baseFee}
-        setBaseFee={setBaseFee}
-        ratePerKm={ratePerKm}
-        setRatePerKm={setRatePerKm}
-        minDistance={minDistance}
-        setMinDistance={setMinDistance}
-        deliverySavedNotice={deliverySavedNotice}
-        handleSaveDeliveryFee={handleSaveDeliveryFee}
-      />
-    );
-  }
-
-  // VIEW 2: ORDER DETAIL VIEW
+  // VIEW 1: ORDER DETAIL VIEW
   if (currentView === 'detail' && selectedOrder) {
     return (
       <VendorOrderDetailView
@@ -177,11 +176,13 @@ export const VendorOrders = () => {
         onBack={() => setCurrentView('list')}
         onAcceptOrder={handleAcceptOrder}
         onMarkDeliverySent={handleMarkDeliverySent}
+        onMarkCompleted={handleMarkCompleted}
+        onChangeStatus={handleChangeStatus}
       />
     );
   }
 
-  // VIEW 3: MAIN ORDERS LIST VIEW
+  // VIEW 2: MAIN ORDERS LIST VIEW
   return (
     <VendorOrdersListView
       orders={orders}
@@ -192,13 +193,13 @@ export const VendorOrders = () => {
       countInTransit={countInTransit}
       countCompleted={countCompleted}
       countCancelled={countCancelled}
-      onOpenManageDelivery={() => setCurrentView('manage_delivery')}
       onSelectOrder={(id) => {
         setSelectedOrderId(id);
         setCurrentView('detail');
       }}
       onAcceptOrder={handleAcceptOrder}
       onMarkDeliverySent={handleMarkDeliverySent}
+      onMarkCompleted={handleMarkCompleted}
     />
   );
 };

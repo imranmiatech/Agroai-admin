@@ -4,6 +4,7 @@ import { VendorProduct } from '../pages/vendorPages/VendorProduct';
 import { AddProductPage } from '../pages/adminPages/AddProductPage';
 import { VendorOrders } from '../pages/vendorPages/VendorOrders';
 import { VendorSupport } from '../pages/vendorPages/VendorSupport';
+import { VendorAdminSupport } from '../pages/vendorPages/VendorAdminSupport';
 import { VendorSettings } from '../pages/vendorPages/VendorSettings';
 
 function VendorOverviewWrapper() {
@@ -28,6 +29,7 @@ export const vendorRoutes = (
     <Route path="offers" element={<Navigate to="/vendor/overview" replace />} />
     <Route path="businessprofile" element={<Navigate to="/vendor/settings" replace />} />
     <Route path="support" element={<VendorSupport />} />
+    <Route path="admin-support" element={<VendorAdminSupport />} />
     <Route path="settings" element={<VendorSettings />} />
   </Route>
 );

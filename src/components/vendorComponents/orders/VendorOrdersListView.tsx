@@ -11,10 +11,10 @@ interface VendorOrdersListViewProps {
   countInTransit: number;
   countCompleted: number;
   countCancelled: number;
-  onOpenManageDelivery: () => void;
   onSelectOrder: (orderId: string) => void;
   onAcceptOrder: (orderId: string) => void;
   onMarkDeliverySent: (orderId: string) => void;
+  onMarkCompleted?: (orderId: string) => void;
 }
 
 export const VendorOrdersListView: React.FC<VendorOrdersListViewProps> = ({
@@ -26,10 +26,10 @@ export const VendorOrdersListView: React.FC<VendorOrdersListViewProps> = ({
   countInTransit,
   countCompleted,
   countCancelled,
-  onOpenManageDelivery,
   onSelectOrder,
   onAcceptOrder,
-  onMarkDeliverySent
+  onMarkDeliverySent,
+  onMarkCompleted,
 }) => {
   const filteredOrders = orders.filter(o => activeTab === 'All' || o.status === activeTab);
 
@@ -54,14 +54,6 @@ export const VendorOrdersListView: React.FC<VendorOrdersListViewProps> = ({
             Orders placed by Krisikunjo customers for your products.
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={onOpenManageDelivery}
-          className="px-4 py-2.5 rounded-xl border border-[#0E4F5A] text-[#0E4F5A] bg-white hover:bg-slate-50 font-semibold text-sm transition-all cursor-pointer shadow-2xs"
-        >
-          Manage delivery fee
-        </button>
       </div>
 
       {/* 2. Four KPI Metric Cards */}
@@ -78,7 +70,7 @@ export const VendorOrdersListView: React.FC<VendorOrdersListViewProps> = ({
 
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
           <div className="text-3xl font-bold text-slate-900 tracking-tight">{countInTransit}</div>
-          <div className="text-xs font-medium text-slate-500 mt-2">In Transit</div>
+          <div className="text-xs font-medium text-slate-500 mt-2">Delivery Sent</div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
@@ -132,9 +124,11 @@ export const VendorOrdersListView: React.FC<VendorOrdersListViewProps> = ({
                     {order.id}
                   </span>
 
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#475569]">
-                    New
-                  </span>
+                  {order.status === 'New' && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#475569]">
+                      New
+                    </span>
+                  )}
 
                   {order.status === 'New' && order.hasActionNeeded && (
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#D97706]">
@@ -203,24 +197,55 @@ export const VendorOrdersListView: React.FC<VendorOrdersListViewProps> = ({
                   ))}
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto">
+                <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
                   {order.status === 'New' && (
-                    <button
-                      type="button"
-                      onClick={() => onAcceptOrder(order.id)}
-                      className="px-5 py-2 rounded-xl bg-[#062E35] hover:bg-[#0A3F47] text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-98"
-                    >
-                      Accept
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAcceptOrder(order.id);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-[#062E35] hover:bg-[#0A3F47] text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-98"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onMarkDeliverySent(order.id);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-[#47559E] hover:bg-[#3D4988] text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-98"
+                      >
+                        Delivery sent
+                      </button>
+                    </>
                   )}
 
                   {order.status === 'Processing' && (
                     <button
                       type="button"
-                      onClick={() => onMarkDeliverySent(order.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMarkDeliverySent(order.id);
+                      }}
                       className="px-5 py-2 rounded-xl bg-[#47559E] hover:bg-[#3D4988] text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-98"
                     >
                       Mark as Delivery sent
+                    </button>
+                  )}
+
+                  {order.status === 'Delivery Sent' && onMarkCompleted && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMarkCompleted(order.id);
+                      }}
+                      className="px-5 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-98"
+                    >
+                      Mark as Completed
                     </button>
                   )}
 

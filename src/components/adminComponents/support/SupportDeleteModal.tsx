@@ -1,9 +1,9 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import type { SupportTicket } from '../../../pages/adminPages/AdminSupport';
+import type { VendorSupportTicket } from '../../../services/vendorAdminSupportService';
 
 interface SupportDeleteModalProps {
-  ticketToDelete: SupportTicket | null;
+  ticketToDelete: VendorSupportTicket | null;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -33,7 +33,7 @@ export const SupportDeleteModal: React.FC<SupportDeleteModalProps> = ({
 
         {/* Subtitle */}
         <p className="text-sm text-slate-500 font-normal leading-relaxed mb-6 px-2">
-          Are you sure you want to delete ticket <span className="font-semibold text-slate-700">#{ticketToDelete.id}</span> from {ticketToDelete.sender}? This action cannot be undone.
+          Are you sure you want to delete ticket <span className="font-semibold text-slate-700">#{ticketToDelete.id}</span> from {ticketToDelete.vendorName || 'Vendor'} ({ticketToDelete.storeName || 'Store'})? This action cannot be undone.
         </p>
 
         {/* Action Buttons Row */}

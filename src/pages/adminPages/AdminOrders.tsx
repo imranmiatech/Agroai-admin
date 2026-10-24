@@ -1,24 +1,23 @@
 import { useState, useMemo } from 'react';
-import { Download, Loader2 } from 'lucide-react';
-import { 
-  OrdersMetricsGrid, 
-  OrdersFilters, 
-  OrdersTable, 
-  OrdersModals 
-} from '../../components/adminComponents/orders';
 import { 
   useGetOrdersQuery, 
   useUpdateOrderStatusMutation, 
   useDeleteOrderMutation 
 } from '../../redux/feature/orders/ordersApi';
+import { AdminOrdersListView } from '../../components/adminComponents/orders/AdminOrdersListView';
+import { AdminOrderDetailView } from '../../components/adminComponents/orders/AdminOrderDetailView';
+import { OrdersModals } from '../../components/adminComponents/orders/OrdersModals';
+import { Loader2 } from 'lucide-react';
 import type { OrderRecord } from '../../redux/feature/orders/ordersType';
 
-export type OrderStatus = 'Processing' | 'In Transit' | 'Delivered' | 'On Hold' | 'Cancelled';
+export type OrderStatus = 'New' | 'Processing' | 'Delivery Sent' | 'Completed' | 'Cancelled';
 
-export interface OrderProduct {
+export interface OrderItemProduct {
+  id?: string;
   name: string;
   qty: number;
-  price: number;
+  unitPrice: string;
+  totalPrice: string;
 }
 
 export interface OrderItem {
@@ -28,9 +27,9 @@ export interface OrderItem {
   customerEmail: string;
   customerInitials: string;
   avatarColor: string;
-  items: OrderProduct[];
+  items: { name: string; qty: number; price: number }[];
   totalAmount: number;
-  paymentMethod: 'Stripe' | 'Apple Pay' | 'Credit Card' | 'PayPal' | string;
+  paymentMethod: string;
   date: string;
   status: OrderStatus;
   shippingAddress: string;
@@ -38,46 +37,51 @@ export interface OrderItem {
   carrier?: string;
 }
 
-const AVATAR_COLORS = [
-  '#062E35', '#0E7A6B', '#2563EB', '#D97706', '#4F46E5', '#DC2626', '#059669', '#7C3AED'
-];
-
-function getInitials(name: string): string {
-  if (!name) return 'CU';
-  const parts = name.trim().split(' ');
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
+export interface AdminOrder {
+  id: string;
+  orderNumber?: string;
+  status: OrderStatus;
+  hasActionNeeded?: boolean;
+  totalAmount: string;
+  rawTotal: number;
+  customerName: string;
+  customerAddress: string;
+  customerPhone: string;
+  customerEmail?: string;
+  dateTime: string;
+  items: OrderItemProduct[];
+  subtotal: string;
+  deliveryFee: string;
+  discount: string;
+  noteFromParent?: string;
+  courierName?: string;
+  trackingNumber?: string;
+  estimatedDelivery?: string;
+  paymentMethod: string;
+  paymentStatus: string;
 }
 
 function mapBackendStatusToAdminStatus(status: string): OrderStatus {
   const s = (status || '').toLowerCase();
-  if (s === 'delivered') return 'Delivered';
-  if (s === 'shipped') return 'In Transit';
-  if (s === 'cancelled') return 'Cancelled';
-  if (s === 'on hold') return 'On Hold';
-  return 'Processing'; // 'pending', 'confirmed', 'processing'
-}
-
-function mapAdminStatusToBackend(status: OrderStatus): string {
-  if (status === 'Delivered') return 'DELIVERED';
-  if (status === 'In Transit') return 'SHIPPED';
-  if (status === 'Cancelled') return 'CANCELLED';
-  if (status === 'On Hold') return 'PENDING';
-  return 'PROCESSING';
+  if (s === 'processing' || s === 'confirmed') return 'Processing';
+  if (s === 'delivery sent' || s === 'delivery_sent' || s === 'shipped' || s === 'in transit') return 'Delivery Sent';
+  if (s === 'completed' || s === 'delivered') return 'Completed';
+  if (s === 'cancelled' || s === 'canceled') return 'Cancelled';
+  return 'New';
 }
 
 export const AdminOrders = () => {
-  // Search & Filters
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatusTab, setSelectedStatusTab] = useState<string>('All');
+  // Navigation views: 'list' | 'detail'
+  const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'All' | OrderStatus>('All');
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 8;
+  // Modal states for delete confirmation & editing
+  const [orderToDelete, setOrderToDelete] = useState<AdminOrder | null>(null);
+  const [editingOrder, setEditingOrder] = useState<any | null>(null);
 
-  // Real API integration
+  // Real backend query for all orders across the system
   const { data: ordersResponse, isLoading } = useGetOrdersQuery(
     { limit: 100 },
     { refetchOnMountOrArgChange: true }
@@ -88,200 +92,222 @@ export const AdminOrders = () => {
 
   const rawOrders: OrderRecord[] = ordersResponse?.data?.orders || [];
 
-  // Map backend orders to OrderItem format
-  const orders: OrderItem[] = useMemo(() => {
-    return rawOrders.map((o, idx) => {
-      const color = AVATAR_COLORS[idx % AVATAR_COLORS.length];
-      const initials = getInitials(o.customerName);
+  // Map backend orders to unified AdminOrder format
+  const orders: AdminOrder[] = useMemo(() => {
+    return rawOrders.map((o) => {
+      const subtotalNum = Number(o.subtotal) || 0;
+      const deliveryNum = Number(o.deliveryFee) || 0;
+      const discountNum = Number(o.discount) || 0;
+      const totalNum = Number(o.total) || subtotalNum + deliveryNum - discountNum;
 
       return {
         id: o.id,
         orderNumber: o.orderNumber,
-        customerName: o.customerName || 'Customer',
-        customerEmail: o.customerEmail || '',
-        customerInitials: initials,
-        avatarColor: color,
+        status: mapBackendStatusToAdminStatus(o.status),
+        hasActionNeeded: o.status === 'pending' || o.status === 'confirmed',
+        totalAmount: `৳${totalNum.toFixed(2)}`,
+        rawTotal: totalNum,
+        customerName: o.customerName || 'Agri Customer',
+        customerAddress: `${o.deliveryAddress || ''}${o.city ? ', ' + o.city : ''}${o.district ? ', ' + o.district : ''}`,
+        customerPhone: o.customerPhone || 'N/A',
+        customerEmail: o.customerEmail || undefined,
+        dateTime: o.orderDate || (o.createdAt ? new Date(o.createdAt).toLocaleString('en-GB') : 'Just now'),
         items: (o.items || []).map((it) => ({
+          id: it.id,
           name: it.productName,
           qty: it.quantity,
-          price: it.price,
+          unitPrice: `৳${Number(it.price).toFixed(2)}`,
+          totalPrice: `৳${(Number(it.price) * Number(it.quantity)).toFixed(2)}`,
         })),
-        totalAmount: Number(o.total) || 0,
-        paymentMethod: o.paymentMethod || 'Cash on Delivery',
-        date: o.orderDate || (o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'Today'),
-        status: mapBackendStatusToAdminStatus(o.status),
-        shippingAddress: `${o.deliveryAddress || ''}${o.city ? ', ' + o.city : ''}${o.district ? ', ' + o.district : ''}`,
+        subtotal: `৳${subtotalNum.toFixed(2)}`,
+        deliveryFee: `৳${deliveryNum.toFixed(2)}`,
+        discount: `৳${discountNum.toFixed(2)}`,
+        noteFromParent: o.notes || undefined,
+        courierName: o.courierName || undefined,
         trackingNumber: o.trackingNumber || undefined,
-        carrier: o.courierName || undefined,
+        estimatedDelivery: o.estimatedDelivery || undefined,
+        paymentMethod: o.paymentMethod || 'Cash on Delivery',
+        paymentStatus: o.paymentStatus || 'Pending',
       };
     });
   }, [rawOrders]);
 
-  // Modals
-  const [viewingOrder, setViewingOrder] = useState<OrderItem | null>(null);
-  const [editingOrder, setEditingOrder] = useState<OrderItem | null>(null);
-  const [orderToHold, setOrderToHold] = useState<OrderItem | null>(null);
-  const [orderToDelete, setOrderToDelete] = useState<OrderItem | null>(null);
-
-  // Dynamic counts for top cards
-  const totalOrdersCount = orders.length;
-  const processingCount = orders.filter((o) => o.status === 'Processing').length;
-  const inTransitCount = orders.filter((o) => o.status === 'In Transit').length;
-  const deliveredCount = orders.filter((o) => o.status === 'Delivered').length;
-
-  // Filtered orders
-  const filteredOrders = orders.filter((order) => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch =
-      order.orderNumber.toLowerCase().includes(term) ||
-      order.customerName.toLowerCase().includes(term) ||
-      order.customerEmail.toLowerCase().includes(term) ||
-      order.items.some((i) => i.name.toLowerCase().includes(term));
-    const matchesStatus =
-      selectedStatusTab === 'All' || order.status === selectedStatusTab;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Pagination slicing
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
-
-  // Status toggle (Hold / Release)
-  const handleToggleHold = async (order: OrderItem) => {
-    const nextAdminStatus: OrderStatus = order.status === 'On Hold' ? 'Processing' : 'On Hold';
-    const backendStatus = mapAdminStatusToBackend(nextAdminStatus);
+  // Actions
+  const handleAcceptOrder = async (orderId: string) => {
     try {
-      await updateOrderStatusMutation({
-        id: order.id,
-        status: backendStatus,
-      }).unwrap();
+      await updateOrderStatusMutation({ id: orderId, status: 'Processing' }).unwrap();
     } catch (err) {
-      console.error('Failed to toggle order hold status:', err);
+      console.error('Failed to accept order:', err);
     }
-    setOrderToHold(null);
   };
 
-  // Delete / Cancel order
+  const handleMarkDeliverySent = async (
+    orderId: string, 
+    courierName?: string, 
+    trackingNumber?: string
+  ) => {
+    try {
+      await updateOrderStatusMutation({ 
+        id: orderId, 
+        status: 'Delivery Sent',
+        courierName,
+        trackingNumber
+      }).unwrap();
+    } catch (err) {
+      console.error('Failed to mark delivery sent:', err);
+    }
+  };
+
+  const handleMarkCompleted = async (orderId: string) => {
+    try {
+      await updateOrderStatusMutation({ 
+        id: orderId, 
+        status: 'Completed',
+        paymentStatus: 'SUCCEEDED'
+      }).unwrap();
+    } catch (err) {
+      console.error('Failed to mark order completed:', err);
+    }
+  };
+
+  const handleChangeStatus = async (orderId: string, status: string) => {
+    let backendStatus = 'PENDING';
+    if (status === 'Processing') backendStatus = 'PROCESSING';
+    if (status === 'Delivery Sent') backendStatus = 'SHIPPED';
+    if (status === 'Completed') backendStatus = 'DELIVERED';
+    if (status === 'Cancelled') backendStatus = 'CANCELLED';
+
+    try {
+      await updateOrderStatusMutation({ id: orderId, status: backendStatus }).unwrap();
+    } catch (err) {
+      console.error('Failed to change status:', err);
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (!orderToDelete) return;
     try {
       await deleteOrderMutation(orderToDelete.id).unwrap();
+      if (selectedOrderId === orderToDelete.id) {
+        setCurrentView('list');
+      }
     } catch (err) {
       console.error('Failed to delete order:', err);
+    } finally {
+      setOrderToDelete(null);
     }
-    setOrderToDelete(null);
   };
 
-  // Save edit order
-  const handleSaveEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingOrder) return;
-    try {
-      await updateOrderStatusMutation({
-        id: editingOrder.id,
-        status: mapAdminStatusToBackend(editingOrder.status),
-        courierName: editingOrder.carrier,
-        trackingNumber: editingOrder.trackingNumber,
-      }).unwrap();
-    } catch (err) {
-      console.error('Failed to update order:', err);
-    }
-    setEditingOrder(null);
-  };
+  // Counts for Metric Cards & Filter Tabs
+  const countNew = orders.filter((o) => o.status === 'New').length;
+  const countProcessing = orders.filter((o) => o.status === 'Processing').length;
+  const countInTransit = orders.filter((o) => o.status === 'Delivery Sent').length;
+  const countCompleted = orders.filter((o) => o.status === 'Completed').length;
+  const countCancelled = orders.filter((o) => o.status === 'Cancelled').length;
+
+  const selectedOrder = orders.find((o) => o.id === selectedOrderId) || orders[0];
 
   if (isLoading && orders.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-slate-500 font-['Inter']">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-3" />
-        <p className="text-sm font-medium">Loading all system orders...</p>
+        <p className="text-sm font-medium">Loading marketplace orders...</p>
       </div>
     );
   }
 
+  // VIEW 1: ORDER DETAIL VIEW (Dedicated Full-Page View matching Vendor)
+  if (currentView === 'detail' && selectedOrder) {
+    return (
+      <>
+        <AdminOrderDetailView
+          order={selectedOrder}
+          onBack={() => setCurrentView('list')}
+          onAcceptOrder={handleAcceptOrder}
+          onMarkDeliverySent={handleMarkDeliverySent}
+          onMarkCompleted={handleMarkCompleted}
+          onChangeStatus={handleChangeStatus}
+          onDelete={(o) => setOrderToDelete(o)}
+        />
+
+        {/* Delete Confirmation Modal */}
+        <OrdersModals
+          viewingOrder={null}
+          setViewingOrder={() => {}}
+          editingOrder={null}
+          setEditingOrder={() => {}}
+          handleSaveEdit={async () => {}}
+          orderToHold={null}
+          setOrderToHold={() => {}}
+          handleToggleHold={async () => {}}
+          orderToDelete={orderToDelete ? ({
+            id: orderToDelete.id,
+            orderNumber: orderToDelete.orderNumber || orderToDelete.id,
+            customerName: orderToDelete.customerName,
+          } as any) : null}
+          setOrderToDelete={(o) => setOrderToDelete(o ? orderToDelete : null)}
+          handleConfirmDelete={handleConfirmDelete}
+        />
+      </>
+    );
+  }
+
+  // VIEW 2: MAIN ORDERS LIST VIEW (Matching Vendor Orders design)
   return (
-    <div className="flex flex-col gap-6 font-['Inter'] pb-16">
-      {/* 1. Header Section */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">
-            Orders
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Review customer purchases, marketplace shipments, and transaction fulfillment.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            const csv = orders
-              .map((o) => `${o.orderNumber},"${o.customerName}",${o.totalAmount},${o.status},"${o.date}"`)
-              .join('\n');
-            const blob = new Blob(
-              [`OrderNumber,Customer,Amount,Status,Date\n${csv}`],
-              { type: 'text/csv' }
-            );
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'krishikunjo_all_orders.csv';
-            a.click();
-          }}
-          className="px-5 py-2.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-sm font-semibold flex items-center gap-2 shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95"
-        >
-          <Download className="w-4 h-4 text-slate-700" />
-          <span>Export Orders</span>
-        </button>
-      </div>
-
-      {/* 2. Top Metric Cards */}
-      <OrdersMetricsGrid
-        totalOrdersCount={totalOrdersCount}
-        processingCount={processingCount}
-        inTransitCount={inTransitCount}
-        deliveredCount={deliveredCount}
-      />
-
-      {/* 3. Filter Bar (Search + Status Capsule Tabs) */}
-      <OrdersFilters
+    <>
+      <AdminOrdersListView
+        orders={orders}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        selectedStatusTab={selectedStatusTab}
-        setSelectedStatusTab={setSelectedStatusTab}
-        onFilterChange={() => setCurrentPage(1)}
+        countNew={countNew}
+        countProcessing={countProcessing}
+        countInTransit={countInTransit}
+        countCompleted={countCompleted}
+        countCancelled={countCancelled}
+        onSelectOrder={(id) => {
+          setSelectedOrderId(id);
+          setCurrentView('detail');
+        }}
+        onAcceptOrder={handleAcceptOrder}
+        onMarkDeliverySent={handleMarkDeliverySent}
+        onMarkCompleted={handleMarkCompleted}
+        onDeleteOrder={(o) => setOrderToDelete(o)}
       />
 
-      {/* 4. Orders Table Container */}
-      <OrdersTable
-        orders={currentOrders}
-        startIndex={startIndex}
-        itemsPerPage={itemsPerPage}
-        totalFiltered={filteredOrders.length}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        setCurrentPage={setCurrentPage}
-        onView={(o) => setViewingOrder(o)}
-        onEdit={(o) => setEditingOrder(o)}
-        onHold={(o) => setOrderToHold(o)}
-        onDelete={(o) => setOrderToDelete(o)}
-      />
-
-      {/* 5. Modals (View, Edit, Hold, Delete) */}
+      {/* Delete Confirmation Modal */}
       <OrdersModals
-        viewingOrder={viewingOrder}
-        setViewingOrder={setViewingOrder}
+        viewingOrder={null}
+        setViewingOrder={() => {}}
         editingOrder={editingOrder}
         setEditingOrder={setEditingOrder}
-        handleSaveEdit={handleSaveEdit}
-        orderToHold={orderToHold}
-        setOrderToHold={setOrderToHold}
-        handleToggleHold={handleToggleHold}
-        orderToDelete={orderToDelete}
-        setOrderToDelete={setOrderToDelete}
+        handleSaveEdit={async (e) => {
+          e.preventDefault();
+          if (!editingOrder) return;
+          try {
+            await updateOrderStatusMutation({
+              id: editingOrder.id,
+              status: editingOrder.status,
+              courierName: editingOrder.carrier,
+              trackingNumber: editingOrder.trackingNumber,
+            }).unwrap();
+          } finally {
+            setEditingOrder(null);
+          }
+        }}
+        orderToHold={null}
+        setOrderToHold={() => {}}
+        handleToggleHold={async () => {}}
+        orderToDelete={orderToDelete ? ({
+          id: orderToDelete.id,
+          orderNumber: orderToDelete.orderNumber || orderToDelete.id,
+          customerName: orderToDelete.customerName,
+        } as any) : null}
+        setOrderToDelete={(o) => setOrderToDelete(o ? orderToDelete : null)}
         handleConfirmDelete={handleConfirmDelete}
       />
-    </div>
+    </>
   );
 };
 

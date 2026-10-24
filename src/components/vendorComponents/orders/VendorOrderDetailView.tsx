@@ -1,24 +1,33 @@
-import React from 'react';
-import { ArrowLeft, Check, RotateCw, Bike, CheckCircle2, FileText, Phone, Bell, PartyPopper } from 'lucide-react';
-import type { VendorOrder } from '../../../pages/vendorPages/VendorOrders';
+import React, { useState } from 'react';
+import { ArrowLeft, Check, RotateCw, Bike, CheckCircle2, FileText, Phone, PartyPopper } from 'lucide-react';
+import type { VendorOrder, OrderStatus } from '../../../pages/vendorPages/VendorOrders';
 
 interface VendorOrderDetailViewProps {
   order: VendorOrder;
   onBack: () => void;
   onAcceptOrder: (orderId: string) => void;
-  onMarkDeliverySent: (orderId: string) => void;
+  onMarkDeliverySent: (orderId: string, courierName?: string, trackingNumber?: string) => void;
+  onMarkCompleted?: (orderId: string) => void;
+  onChangeStatus?: (orderId: string, status: OrderStatus) => void;
 }
 
 export const VendorOrderDetailView: React.FC<VendorOrderDetailViewProps> = ({
   order,
   onBack,
   onAcceptOrder,
-  onMarkDeliverySent
+  onMarkDeliverySent,
+  onMarkCompleted,
+  onChangeStatus,
 }) => {
   const isNew = order.status === 'New';
   const isProcessing = order.status === 'Processing';
   const isDeliverySent = order.status === 'Delivery Sent';
   const isCompleted = order.status === 'Completed';
+  const isCancelled = order.status === 'Cancelled';
+
+  const [courierName, setCourierName] = useState(order.courierName || 'KrishiKunjo Cold-Chain Logistics');
+  const [trackingNumber, setTrackingNumber] = useState(order.trackingNumber || `KK-TRK-${order.orderNumber?.replace(/[^0-9]/g, '') || '88001'}`);
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus>(order.status);
 
   return (
     <div className="flex flex-col gap-6 w-full font-['Inter'] animate-in fade-in duration-200">
@@ -44,28 +53,59 @@ export const VendorOrderDetailView: React.FC<VendorOrderDetailViewProps> = ({
         </div>
 
         {/* Action Button at Top Right */}
-        <div>
+        <div className="flex items-center gap-2">
           {isNew && (
-            <button
-              type="button"
-              onClick={() => onAcceptOrder(order.id)}
-              className="px-5 py-2.5 rounded-xl bg-[#062E35] hover:bg-[#0A3F47] text-white text-sm font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
-            >
-              Accept order
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => onAcceptOrder(order.id)}
+                className="px-4 py-2.5 rounded-xl bg-[#062E35] hover:bg-[#0A3F47] text-white text-sm font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
+              >
+                Accept order
+              </button>
+              <button
+                type="button"
+                onClick={() => onMarkDeliverySent(order.id, courierName, trackingNumber)}
+                className="px-4 py-2.5 rounded-xl bg-[#47559E] hover:bg-[#3D4988] text-white text-sm font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
+              >
+                Delivery sent
+              </button>
+            </>
           )}
           {isProcessing && (
             <button
               type="button"
-              onClick={() => onMarkDeliverySent(order.id)}
+              onClick={() => onMarkDeliverySent(order.id, courierName, trackingNumber)}
               className="px-5 py-2.5 rounded-xl bg-[#47559E] hover:bg-[#3D4988] text-white text-sm font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
             >
               Mark as Delivery sent
             </button>
           )}
-          {(isDeliverySent || isCompleted) && (
-            <span className="inline-flex items-center px-4 py-2 rounded-xl text-xs font-semibold bg-[#EDE9FE] text-[#6366F1]">
-              Delivery sent
+          {isDeliverySent && (
+            <>
+              <span className="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#EDE9FE] text-[#6366F1]">
+                Delivery sent
+              </span>
+              {onMarkCompleted && (
+                <button
+                  type="button"
+                  onClick={() => onMarkCompleted(order.id)}
+                  className="px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-sm font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                  Mark as Completed
+                </button>
+              )}
+            </>
+          )}
+          {isCompleted && (
+            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-[#ECFDF5] text-[#10B981]">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              Completed
+            </span>
+          )}
+          {isCancelled && (
+            <span className="inline-flex items-center px-4 py-2 rounded-xl text-xs font-semibold bg-[#FFF1F2] text-[#E11D48]">
+              Cancelled
             </span>
           )}
         </div>
@@ -73,88 +113,143 @@ export const VendorOrderDetailView: React.FC<VendorOrderDetailViewProps> = ({
 
       {/* Order Progress Stepper */}
       <div className="flex flex-col gap-3">
-        <span className="text-sm font-semibold text-slate-800">
-          Order Progress
-        </span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-slate-800">
+            Order Progress
+          </span>
+          {isCancelled ? (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">
+              Order Cancelled
+            </span>
+          ) : (
+            <span className="text-xs text-slate-500 font-medium">
+              Current: <span className="font-semibold text-slate-800">{order.status}</span>
+            </span>
+          )}
+        </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs overflow-x-auto">
-          <div className="flex items-center justify-between relative max-w-4xl mx-auto px-1 sm:px-4 min-w-[280px]">
-            {/* Step 1: New */}
-            <div className="flex flex-col items-center gap-1.5 sm:gap-2 relative z-10">
-              <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
-                isNew 
-                  ? 'bg-[#E6F4F6] text-[#0E4F5A] border-2 border-[#0E4F5A]' 
-                  : 'bg-[#10B981] text-white shadow-xs'
-              }`}>
-                {isNew ? <FileText className="w-4 h-4 sm:w-5 sm:h-5" /> : <Check className="w-4 h-4 sm:w-6 sm:h-6 stroke-[3]" />}
+        {isCancelled ? (
+          <div className="bg-rose-50/70 rounded-2xl border border-rose-200/80 p-5 sm:p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-lg">
+                  ✕
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-rose-900">Order Cancelled</h4>
+                  <p className="text-xs text-rose-700 mt-0.5">
+                    This order was registered on {order.dateTime} and has been cancelled. Active delivery and processing are stopped.
+                  </p>
+                </div>
               </div>
-              <span className="text-[10px] sm:text-xs font-semibold text-slate-800 text-center">New</span>
-            </div>
-
-            {/* Connecting line 1 */}
-            <div className={`flex-1 h-0.5 mx-1 sm:mx-2 transition-all ${
-              !isNew ? 'bg-[#0E4F5A]' : 'bg-slate-200'
-            }`} />
-
-            {/* Step 2: Processing */}
-            <div className="flex flex-col items-center gap-1.5 sm:gap-2 relative z-10">
-              <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
-                isProcessing 
-                  ? 'bg-[#E6F4F6] text-[#0E4F5A] border-2 border-[#0E4F5A]' 
-                  : isDeliverySent || isCompleted
-                    ? 'bg-[#10B981] text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-400'
-              }`}>
-                {isDeliverySent || isCompleted ? (
-                  <Check className="w-4 h-4 sm:w-6 sm:h-6 stroke-[3]" />
-                ) : (
-                  <RotateCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isProcessing ? 'animate-spin' : ''}`} />
-                )}
-              </div>
-              <span className="text-[10px] sm:text-xs font-semibold text-slate-800 text-center">Processing</span>
-            </div>
-
-            {/* Connecting line 2 */}
-            <div className={`flex-1 h-0.5 mx-1 sm:mx-2 transition-all ${
-              isDeliverySent || isCompleted ? 'bg-[#0E4F5A]' : 'bg-slate-200'
-            }`} />
-
-            {/* Step 3: Delivery Sent */}
-            <div className="flex flex-col items-center gap-1.5 sm:gap-2 relative z-10">
-              <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
-                isDeliverySent 
-                  ? 'bg-[#E6F4F6] text-[#0E4F5A] border-2 border-[#0E4F5A]' 
-                  : isCompleted
-                    ? 'bg-[#10B981] text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-400'
-              }`}>
-                {isCompleted ? (
-                  <Check className="w-4 h-4 sm:w-6 sm:h-6 stroke-[3]" />
-                ) : (
-                  <Bike className="w-4 h-4 sm:w-5 sm:h-5" />
-                )}
-              </div>
-              <span className="text-[10px] sm:text-xs font-semibold text-slate-800 text-center">Delivery Sent</span>
-            </div>
-
-            {/* Connecting line 3 */}
-            <div className={`flex-1 h-0.5 mx-1 sm:mx-2 transition-all ${
-              isCompleted ? 'bg-[#0E4F5A]' : 'bg-slate-200'
-            }`} />
-
-            {/* Step 4: Completed */}
-            <div className="flex flex-col items-center gap-1.5 sm:gap-2 relative z-10">
-              <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
-                isCompleted 
-                  ? 'bg-[#10B981] text-white shadow-xs' 
-                  : 'bg-slate-100 text-slate-400'
-              }`}>
-                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <span className="text-[10px] sm:text-xs font-semibold text-slate-800 text-center">Completed</span>
+              {onChangeStatus && (
+                <button
+                  type="button"
+                  onClick={() => onChangeStatus(order.id, 'New')}
+                  className="px-4 py-2 rounded-xl bg-white border border-rose-300 text-rose-700 hover:bg-rose-100 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap shadow-2xs"
+                >
+                  Reopen as New
+                </button>
+              )}
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs overflow-x-auto">
+            <div className="flex items-center justify-between relative max-w-4xl mx-auto px-1 sm:px-4 min-w-[280px]">
+              {[
+                {
+                  idx: 0,
+                  id: 'New' as OrderStatus,
+                  label: 'New',
+                  sublabel: order.dateTime || 'Order Placed',
+                  icon: FileText,
+                },
+                {
+                  idx: 1,
+                  id: 'Processing' as OrderStatus,
+                  label: 'Processing',
+                  sublabel: isProcessing ? 'In Progress' : (isDeliverySent || isCompleted) ? 'Confirmed' : 'Pending',
+                  icon: RotateCw,
+                },
+                {
+                  idx: 2,
+                  id: 'Delivery Sent' as OrderStatus,
+                  label: 'Delivery Sent',
+                  sublabel: isDeliverySent ? (order.courierName ? `Via ${order.courierName}` : 'In Transit') : isCompleted ? 'Dispatched' : 'Pending',
+                  icon: Bike,
+                },
+                {
+                  idx: 3,
+                  id: 'Completed' as OrderStatus,
+                  label: 'Completed',
+                  sublabel: isCompleted ? 'Delivered' : 'Pending',
+                  icon: CheckCircle2,
+                },
+              ].map((step, i, arr) => {
+                const currentIdx = isCompleted ? 3 : isDeliverySent ? 2 : isProcessing ? 1 : 0;
+                const isStepCompleted = currentIdx > step.idx || (step.idx === 3 && isCompleted);
+                const isStepActive = currentIdx === step.idx && !isCompleted;
+                const IconComp = step.icon;
+
+                return (
+                  <React.Fragment key={step.id}>
+                    {/* Step Circle & Label */}
+                    <div 
+                      onClick={() => onChangeStatus && onChangeStatus(order.id, step.id)}
+                      className={`flex flex-col items-center gap-1.5 sm:gap-2 relative z-10 select-none ${
+                        onChangeStatus ? 'cursor-pointer group' : ''
+                      }`}
+                      title={onChangeStatus ? `Click to switch status to ${step.label}` : step.label}
+                    >
+                      <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
+                        isStepCompleted 
+                          ? 'bg-[#10B981] text-white shadow-xs group-hover:bg-[#059669]' 
+                          : isStepActive
+                            ? 'bg-[#E6F4F6] text-[#0E4F5A] border-2 border-[#0E4F5A] ring-4 ring-[#E6F4F6] shadow-xs'
+                            : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600'
+                      }`}>
+                        {isStepCompleted ? (
+                          <Check className="w-4 h-4 sm:w-6 sm:h-6 stroke-[3]" />
+                        ) : isStepActive && step.id === 'Processing' ? (
+                          <RotateCw className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-[#0E4F5A]" />
+                        ) : (
+                          <IconComp className="w-4 h-4 sm:w-5 sm:h-5" />
+                        )}
+                      </div>
+
+                      <span className={`text-[10px] sm:text-xs text-center transition-colors ${
+                        isStepActive
+                          ? 'font-bold text-[#0E4F5A]'
+                          : isStepCompleted
+                            ? 'font-semibold text-slate-900'
+                            : 'font-medium text-slate-400'
+                      }`}>
+                        {step.label}
+                      </span>
+
+                      <span className={`text-[9px] sm:text-[10px] text-center whitespace-nowrap mt-0.5 ${
+                        isStepActive
+                          ? 'text-[#0E4F5A] font-semibold'
+                          : isStepCompleted
+                            ? 'text-slate-500 font-normal'
+                            : 'text-slate-300'
+                      }`}>
+                        {step.sublabel}
+                      </span>
+                    </div>
+
+                    {/* Connecting Line */}
+                    {i < arr.length - 1 && (
+                      <div className={`flex-1 h-0.5 mx-1 sm:mx-2 transition-all ${
+                        currentIdx > step.idx ? 'bg-[#10B981]' : 'bg-slate-200'
+                      }`} />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Status Callout Banner */}
@@ -277,59 +372,132 @@ export const VendorOrderDetailView: React.FC<VendorOrderDetailViewProps> = ({
 
           {/* Card 2: Interactive Context State Card */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col gap-4">
+            <span className="text-sm font-semibold text-slate-800 border-b border-slate-100 pb-3">
+              Fulfillment Controls
+            </span>
+
             {isNew && (
-              <>
-                <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-bold text-slate-900">
                   New Order Received
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Review the items above and accept this order to begin preparing the delivery.
+                  Review the items above and accept this order to begin preparing, or dispatch directly.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => onAcceptOrder(order.id)}
-                  className="w-full py-3 rounded-xl bg-[#062E35] hover:bg-[#0A3F47] text-white text-sm font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
-                >
-                  Accept Order
-                </button>
-              </>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onAcceptOrder(order.id)}
+                    className="flex-1 py-3 rounded-xl bg-[#062E35] hover:bg-[#0A3F47] text-white text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
+                  >
+                    Accept Order
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onMarkDeliverySent(order.id, courierName, trackingNumber)}
+                    className="flex-1 py-3 rounded-xl bg-[#47559E] hover:bg-[#3D4988] text-white text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
+                  >
+                    Delivery sent
+                  </button>
+                </div>
+              </div>
             )}
 
             {isProcessing && (
-              <>
-                <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
+              <div className="flex flex-col gap-3.5">
+                <h3 className="text-sm font-bold text-slate-900">
                   Ready to dispatch?
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Once you've packed and dispatched the order, tap below. The parent will be notified to expect their delivery.
+                  Enter courier details if available and click below to notify the customer.
                 </p>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-semibold text-slate-600">Courier / Logistics Partner</label>
+                  <input
+                    type="text"
+                    value={courierName}
+                    onChange={(e) => setCourierName(e.target.value)}
+                    placeholder="e.g. KrishiKunjo Cold-Chain / Pathao"
+                    className="p-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#0E4F5A]"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-semibold text-slate-600">Tracking Number</label>
+                  <input
+                    type="text"
+                    value={trackingNumber}
+                    onChange={(e) => setTrackingNumber(e.target.value)}
+                    placeholder="e.g. KK-TRK-88001"
+                    className="p-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#0E4F5A]"
+                  />
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => onMarkDeliverySent(order.id)}
+                  onClick={() => onMarkDeliverySent(order.id, courierName, trackingNumber)}
                   className="w-full py-3 rounded-xl bg-[#47559E] hover:bg-[#3D4988] text-white text-sm font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
                 >
                   Mark as Delivery sent
                 </button>
-              </>
+              </div>
             )}
 
-            {(isDeliverySent || isCompleted) && (
-              <>
-                <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
+            {isDeliverySent && (
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-bold text-slate-900">
                   Delivery in transit
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Waiting for {order.confirmationRecipient || 'Priya Nair'} to confirm receipt through the Krisikunjo app. You'll receive a notification when they do.
+                  The order is with courier <span className="font-semibold text-slate-700">{order.courierName || courierName}</span> (Tracking #{order.trackingNumber || trackingNumber}).
                 </p>
-                <button
-                  type="button"
-                  disabled
-                  className="w-full py-3 rounded-xl bg-[#F1F5F9] text-slate-500 text-xs font-semibold flex items-center justify-center gap-2 cursor-default"
-                >
-                  <Bell className="w-4 h-4 text-slate-400" />
-                  <span>You'll be notified on completion</span>
-                </button>
-              </>
+                {onMarkCompleted && (
+                  <button
+                    type="button"
+                    onClick={() => onMarkCompleted(order.id)}
+                    className="w-full py-3 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-sm font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
+                  >
+                    Mark as Completed
+                  </button>
+                )}
+              </div>
+            )}
+
+            {isCompleted && (
+              <div className="p-3.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-medium flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>This order has been completed and verified.</span>
+              </div>
+            )}
+
+            {/* Direct Status Selector */}
+            {onChangeStatus && (
+              <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+                <label className="text-[11px] font-semibold text-slate-500">
+                  Change Status Directly
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value as OrderStatus)}
+                    className="flex-1 p-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-[#0E4F5A] bg-white cursor-pointer"
+                  >
+                    <option value="New">New</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Delivery Sent">Delivery Sent</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => onChangeStatus(order.id, selectedStatus)}
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>

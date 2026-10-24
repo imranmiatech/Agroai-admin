@@ -16,7 +16,7 @@ export const OrdersFilters: React.FC<OrdersFiltersProps> = ({
   setSelectedStatusTab,
   onFilterChange
 }) => {
-  const tabs = ['All', 'Processing', 'In Transit', 'Delivered', 'On Hold', 'Cancelled'] as const;
+  const tabs = ['All', 'New', 'Processing', 'Delivery Sent', 'Completed', 'Cancelled'] as const;
 
   return (
     <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex flex-col lg:flex-row items-center justify-between gap-4">

@@ -18,6 +18,7 @@ export type VendorTab =
   | 'product' 
   | 'orders' 
   | 'support' 
+  | 'admin-support'
   | 'settings' 
   | 'logout';
 

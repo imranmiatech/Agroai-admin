@@ -95,10 +95,10 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                   <td className="py-4 px-6">
                     <div className="flex flex-col max-w-xs">
                       <span className="text-xs font-semibold text-slate-800">
-                        {order.items.reduce((sum, i) => sum + i.qty, 0)} items
+                        {order.items.reduce((sum: number, i: any) => sum + i.qty, 0)} items
                       </span>
-                      <span className="text-xs text-slate-400 mt-0.5 truncate" title={order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}>
-                        {order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}
+                      <span className="text-xs text-slate-400 mt-0.5 truncate" title={order.items.map((i: any) => `${i.qty}x ${i.name}`).join(', ')}>
+                        {order.items.map((i: any) => `${i.qty}x ${i.name}`).join(', ')}
                       </span>
                     </div>
                   </td>
@@ -117,33 +117,33 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
 
                   {/* Status Badge */}
                   <td className="py-4 px-6">
+                    {order.status === 'New' && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#F1F5F9] text-[#475569]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#475569]" />
+                        <span>New</span>
+                      </span>
+                    )}
                     {order.status === 'Processing' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#D97706]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E0F2FE] text-[#0284C7]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7]" />
                         <span>Processing</span>
                       </span>
                     )}
-                    {order.status === 'In Transit' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E0F2FE] text-[#0284C7]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7]" />
-                        <span>In Transit</span>
+                    {order.status === 'Delivery Sent' && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EDE9FE] text-[#6366F1]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#6366F1]" />
+                        <span>Delivery Sent</span>
                       </span>
                     )}
-                    {order.status === 'Delivered' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#DCFCE7] text-[#16A34A]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
-                        <span>Delivered</span>
-                      </span>
-                    )}
-                    {order.status === 'On Hold' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-                        <span>On Hold</span>
+                    {order.status === 'Completed' && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#10B981]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                        <span>Completed</span>
                       </span>
                     )}
                     {order.status === 'Cancelled' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FEE4E2] text-[#D92D20]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#D92D20]" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FFF1F2] text-[#E11D48]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48]" />
                         <span>Cancelled</span>
                       </span>
                     )}
@@ -174,11 +174,11 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                         type="button"
                         onClick={() => onHold(order)}
                         className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-                          order.status === 'On Hold'
+                          (order.status as any) === 'On Hold'
                             ? 'text-purple-600 bg-purple-50 hover:bg-purple-100'
                             : 'text-slate-400 hover:text-purple-600 hover:bg-purple-50'
                         }`}
-                        title={order.status === 'On Hold' ? 'Release hold' : 'Put on fulfillment hold'}
+                        title={(order.status as any) === 'On Hold' ? 'Release hold' : 'Put on fulfillment hold'}
                       >
                         <Ban className="w-4 h-4" />
                       </button>
