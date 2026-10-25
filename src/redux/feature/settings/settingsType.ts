@@ -28,3 +28,20 @@ export interface SingleCardResponse {
   message: string;
   data: SavedCard;
 }
+
+export interface CommissionSetting {
+  commissionPercentage: number;
+  payoutDelayMinutes: number;
+  description: string;
+  updatedAt?: string;
+}
+
+export interface CommissionResponse {
+  statusCode: number;
+  message: string;
+  data: CommissionSetting;
+}
+
+export interface UpdateCommissionPayload {
+  commissionPercentage: number;
+}

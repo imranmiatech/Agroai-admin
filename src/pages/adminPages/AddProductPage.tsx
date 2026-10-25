@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { 
+import {
   Search,
-  ArrowLeft, 
-  UploadCloud, 
-  Package, 
-  Tag, 
-  DollarSign, 
-  Store, 
-  CheckCircle2, 
+  ArrowLeft,
+  UploadCloud,
+  Package,
+  Tag,
+  DollarSign,
+  Store,
+  CheckCircle2,
   AlertCircle,
   X,
   Plus,
@@ -23,37 +23,20 @@ import {
   ExternalLink,
   Layers
 } from 'lucide-react';
-import { 
+import {
   useAppSelector,
   useCreateProductMutation,
   useSearchVendorsQuery,
   useUpdateProductMutation,
   useGetProductByIdQuery,
+  useGetCategoriesQuery,
+  AGRICULTURE_CATEGORIES,
   type ProductStatus,
 } from '../../redux';
 
 interface AddProductPageProps {
   isVendor?: boolean;
 }
-
-const AGRICULTURE_CATEGORIES = [
-  'Seeds & Seedlings',
-  'Vegetables',
-  'Plants & Seedlings',
-  'Fertilizers',
-  'Farm Tools',
-  'Agro Chemicals',
-  'Dairy & Poultry',
-  'Fish Farming',
-  'Produce',
-  'Nutrition',
-  'Baby Care',
-  'Nursery',
-  'Safety',
-  'Toys',
-  'Feeding',
-  'Accessories'
-];
 
 interface SpecItem {
   key: string;
@@ -76,7 +59,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
   const [name, setName] = useState('');
   const [sku, setSku] = useState(`AGRO-${Math.floor(1000 + Math.random() * 9000)}`);
   const [slug, setSlug] = useState('');
-  const [category, setCategory] = useState(AGRICULTURE_CATEGORIES[0]);
+  const [category, setCategory] = useState<string>(AGRICULTURE_CATEGORIES[0]);
   const [customCategory, setCustomCategory] = useState('');
   const [price, setPrice] = useState('');
   const [deliveryCharge, setDeliveryCharge] = useState('0');
@@ -91,6 +74,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
   const [description, setDescription] = useState('');
 
   // RTK Query hooks
+  const { data: categoriesResp } = useGetCategoriesQuery();
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const { data: searchedVendorsResp, isFetching: isSearchingVendors } = useSearchVendorsQuery(vendorSearchQuery, {
     skip: isVendor,
@@ -101,6 +85,15 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
     editProductId || '',
     { skip: !editProductId }
   );
+
+  // Available categories: dynamic categories directly from backend database
+  const availableCategories = React.useMemo(() => {
+    const fromApi = Array.isArray(categoriesResp?.data)
+      ? categoriesResp.data
+      : (categoriesResp?.data as { categories?: { name: string }[] })?.categories || [];
+    const apiNames = fromApi.map((c) => c.name).filter(Boolean);
+    return Array.from(new Set(apiNames));
+  }, [categoriesResp]);
 
   // Highlights (bullet points)
   const [highlights, setHighlights] = useState<string[]>([
@@ -139,7 +132,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
       setName(p.name || '');
       setSku(p.sku || '');
       setSlug(p.slug || '');
-      if (AGRICULTURE_CATEGORIES.includes(p.category)) {
+      if (availableCategories.includes(p.category)) {
         setCategory(p.category);
       } else {
         setCategory('Other');
@@ -261,8 +254,8 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
   const numericPrice = parseFloat(price) || 0;
   const numericComparePrice = parseFloat(compareAtPrice) || 0;
   const hasDiscount = numericComparePrice > numericPrice && numericPrice > 0;
-  const discountPercent = hasDiscount 
-    ? Math.round(((numericComparePrice - numericPrice) / numericComparePrice) * 100) 
+  const discountPercent = hasDiscount
+    ? Math.round(((numericComparePrice - numericPrice) / numericComparePrice) * 100)
     : 0;
 
   // Completion readiness checklist calculation
@@ -290,8 +283,8 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
       return;
     }
 
-    const finalCategory = category === 'Other' && customCategory.trim() 
-      ? customCategory.trim() 
+    const finalCategory = category === 'Other' && customCategory.trim()
+      ? customCategory.trim()
       : category;
 
     // Build specifications dictionary
@@ -425,8 +418,8 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
           <div>
             {/* Breadcrumb path */}
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
-              <span 
-                onClick={handleBack} 
+              <span
+                onClick={handleBack}
                 className="hover:text-slate-700 cursor-pointer transition-colors"
               >
                 Products
@@ -443,20 +436,18 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
               </h1>
 
               {/* Status pill */}
-              <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold ${
-                status === 'ACTIVE' 
+              <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold ${status === 'ACTIVE'
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   : status === 'SUSPENDED'
-                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                  : 'bg-rose-50 text-rose-700 border border-rose-200'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  status === 'ACTIVE' ? 'bg-emerald-500' : status === 'SUSPENDED' ? 'bg-amber-500' : 'bg-rose-500'
-                }`} />
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${status === 'ACTIVE' ? 'bg-emerald-500' : status === 'SUSPENDED' ? 'bg-amber-500' : 'bg-rose-500'
+                  }`} />
                 {status}
               </span>
             </div>
-            
+
             <p className="text-xs text-slate-500 mt-1">
               {isVendor
                 ? `Publish agricultural produce, seeds, tools, or inputs under ${vendorName}.`
@@ -514,7 +505,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
       <form onSubmit={handleSubmit} className="w-full grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         {/* Left Columns: Main Content Details (xl: 8 cols, 2xl: 8 cols) */}
         <div className="w-full xl:col-span-8 flex flex-col gap-7">
-          
+
           {/* Section 1: General Product Information */}
           <div className="w-full bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/80 shadow-2xs flex flex-col gap-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -569,7 +560,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 bg-white hover:border-slate-300 focus:outline-none focus:border-[#062E35] focus:ring-3 focus:ring-[#062E35]/10 cursor-pointer transition-all"
                 >
-                  {AGRICULTURE_CATEGORIES.map((cat) => (
+                  {availableCategories.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
@@ -666,11 +657,10 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
                 return (
                   <div
                     key={idx}
-                    className={`h-40 rounded-2xl border-2 flex flex-col items-center justify-center relative overflow-hidden transition-all group ${
-                      preview
+                    className={`h-40 rounded-2xl border-2 flex flex-col items-center justify-center relative overflow-hidden transition-all group ${preview
                         ? 'border-slate-200 shadow-xs bg-slate-50'
                         : 'border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-100/70 hover:border-slate-300'
-                    }`}
+                      }`}
                   >
                     {preview ? (
                       <>
@@ -1011,7 +1001,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
 
             {/* Progress Bar */}
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-linear-to-r from-emerald-500 to-[#062E35] transition-all duration-300 rounded-full"
                 style={{ width: `${completionPercentage}%` }}
               />
@@ -1042,21 +1032,21 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
 
             <div className="flex flex-col gap-2.5">
               {[
-                { 
-                  value: 'ACTIVE', 
-                  label: 'ACTIVE', 
+                {
+                  value: 'ACTIVE',
+                  label: 'ACTIVE',
                   desc: 'Publicly visible and buyable on AgroAi marketplace',
                   badgeColor: 'border-emerald-300 bg-emerald-50 text-emerald-800'
                 },
-                { 
-                  value: 'SUSPENDED', 
-                  label: 'SUSPENDED / DRAFT', 
+                {
+                  value: 'SUSPENDED',
+                  label: 'SUSPENDED / DRAFT',
                   desc: 'Hidden from store catalog for review or staging',
                   badgeColor: 'border-amber-300 bg-amber-50 text-amber-800'
                 },
-                { 
-                  value: 'OUT_OF_STOCK', 
-                  label: 'OUT OF STOCK', 
+                {
+                  value: 'OUT_OF_STOCK',
+                  label: 'OUT OF STOCK',
                   desc: 'Displayed as sold out in marketplace',
                   badgeColor: 'border-rose-300 bg-rose-50 text-rose-800'
                 },
@@ -1064,11 +1054,10 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
                 <label
                   key={opt.value}
                   onClick={() => setStatus(opt.value as ProductStatus)}
-                  className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
-                    status === opt.value
+                  className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 ${status === opt.value
                       ? 'border-[#062E35] bg-teal-50/30'
                       : 'border-slate-100 bg-white hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   <input
                     type="radio"
@@ -1301,7 +1290,7 @@ export const AddProductPage: React.FC<AddProductPageProps> = ({ isVendor: propIs
                 <h4 className="text-sm font-bold text-slate-900 line-clamp-1">
                   {name || 'Product Title Sample Preview'}
                 </h4>
-                
+
                 <div className="flex items-baseline gap-2 mt-0.5">
                   <span className="text-base font-extrabold text-slate-900">
                     ৳{numericPrice > 0 ? numericPrice.toFixed(2) : '0.00'}

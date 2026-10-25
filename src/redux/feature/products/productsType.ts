@@ -1,5 +1,20 @@
 export type ProductStatus = 'ACTIVE' | 'SUSPENDED' | 'OUT_OF_STOCK';
 
+export const AGRICULTURE_CATEGORIES = [
+  'Seeds & Seedlings',
+  'Fertilizers',
+  'Garden Tools',
+  'Pesticides',
+  'Plant Pots',
+  'Vegetables',
+  'Fruits',
+  'Agricultural Machinery',
+  'Organic Products',
+  'Herbs',
+] as const;
+
+export type AgricultureCategory = (typeof AGRICULTURE_CATEGORIES)[number];
+
 export interface VendorInfo {
   id: string;
   businessName: string;

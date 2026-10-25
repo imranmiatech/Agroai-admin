@@ -38,6 +38,8 @@ export const AppRoutes = () => {
         <Route path="/content" element={<Navigate to="/admin/content" replace />} />
         <Route path="/support" element={<Navigate to="/admin/support" replace />} />
         <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
+        <Route path="/categories" element={<Navigate to="/admin/categories" replace />} />
+        <Route path="/category" element={<Navigate to="/admin/categories" replace />} />
 
         {/* Root and Fallback Catch-all Redirects */}
         <Route path="/" element={<Navigate to="/admin/overview" replace />} />

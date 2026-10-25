@@ -11,6 +11,7 @@ export type AdminTab =
   | 'contact'
   | 'support' 
   | 'settings' 
+  | 'categories'
   | 'logout';
 
 export type VendorTab = 

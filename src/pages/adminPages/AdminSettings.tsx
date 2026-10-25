@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShieldCheck, Loader2, FolderPlus } from 'lucide-react';
 import {
   AdminProfileSettings,
   AdminPasswordSettings,
@@ -12,6 +13,7 @@ import {
 } from '../../redux/feature/profile/profileApi';
 import { useAppDispatch } from '../../redux/store/hooks';
 import { setUser } from '../../redux/feature/auth/authSlice';
+import { AdminCommissionSettings } from '../../components/adminComponents/settings/AdminCommissionSettings';
 
 export const AdminSettings: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -163,7 +165,16 @@ export const AdminSettings: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin/categories?openModal=true"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#062E35] text-white hover:bg-[#0E4F5A] active:scale-95 transition-all shadow-sm cursor-pointer group no-underline"
+            title="Manage and add product categories"
+          >
+            <FolderPlus className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span>Add Category</span>
+          </Link>
+
           {isProfileLoading ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -216,7 +227,10 @@ export const AdminSettings: React.FC = () => {
         />
       </div>
 
-      {/* 3. Bottom Row: Billing & Corporate Payment Methods */}
+      {/* 3. Platform Commission & 10-Minute Vendor Payout Configuration */}
+      <AdminCommissionSettings />
+
+      {/* 4. Bottom Row: Billing & Corporate Payment Methods */}
       <AdminBillingCardSettings />
     </div>
   );

@@ -49,3 +49,11 @@ export interface SendMessageDto {
   status?: ConsultationStatus;
   markResolved?: boolean;
 }
+
+export interface ConsultationStats {
+  totalTickets: number;
+  waitingTickets: number;
+  openTickets: number;
+  resolvedTickets: number;
+}
+

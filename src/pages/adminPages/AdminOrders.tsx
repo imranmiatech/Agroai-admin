@@ -187,7 +187,7 @@ export const AdminOrders = () => {
   const handleConfirmDelete = async () => {
     if (!orderToDelete) return;
     try {
-      await deleteOrderMutation(orderToDelete.id).unwrap();
+      await deleteOrderMutation({ id: orderToDelete.id, mode: 'hard' }).unwrap();
       if (selectedOrderId === orderToDelete.id) {
         setCurrentView('list');
       }

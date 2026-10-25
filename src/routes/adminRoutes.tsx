@@ -11,6 +11,7 @@ import { ArticleEditorPage } from '../pages/adminPages/ArticleEditorPage';
 import { AdminSupport } from '../pages/adminPages/AdminSupport';
 import { AdminSettings } from '../pages/adminPages/AdminSettings';
 import { ContactInquiriesPage } from '../pages/adminPages/ContactInquiriesPage';
+import { CategoryManagementPage } from '../pages/adminPages/CategoryManagementPage';
 
 export const adminRoutes = (
   <Route path="/admin">
@@ -31,5 +32,9 @@ export const adminRoutes = (
     <Route path="contact" element={<ContactInquiriesPage />} />
     <Route path="support" element={<AdminSupport />} />
     <Route path="settings" element={<AdminSettings />} />
+    <Route path="categories" element={<CategoryManagementPage />} />
+    <Route path="category" element={<CategoryManagementPage />} />
+    <Route path="categories/add" element={<CategoryManagementPage />} />
+    <Route path="category/add" element={<CategoryManagementPage />} />
   </Route>
 );

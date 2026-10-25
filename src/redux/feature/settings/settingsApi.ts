@@ -3,10 +3,29 @@ import type {
   CardsResponse,
   SaveCardPayload,
   SingleCardResponse,
+  CommissionResponse,
+  UpdateCommissionPayload,
 } from './settingsType';
 
 export const settingsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getCommissionSetting: builder.query<CommissionResponse, void>({
+      query: () => ({
+        url: '/billing/commission',
+        method: 'GET',
+      }),
+      providesTags: ['Billing'],
+    }),
+
+    updateCommissionSetting: builder.mutation<CommissionResponse, UpdateCommissionPayload>({
+      query: (body) => ({
+        url: '/billing/commission',
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Billing'],
+    }),
+
     getSavedCards: builder.query<CardsResponse, void>({
       query: () => ({
         url: '/billing/cards',
@@ -44,6 +63,8 @@ export const settingsApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useGetCommissionSettingQuery,
+  useUpdateCommissionSettingMutation,
   useGetSavedCardsQuery,
   useSaveCardMutation,
   useSetDefaultCardMutation,

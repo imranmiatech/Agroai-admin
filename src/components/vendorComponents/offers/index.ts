@@ -1,1 +1,1 @@
-export { VendorOffersTable } from './VendorOffersTable';
+export {};

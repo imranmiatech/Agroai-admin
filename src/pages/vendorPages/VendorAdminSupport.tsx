@@ -4,7 +4,6 @@ import {
   Plus,
   Search,
   CheckCircle2,
-  Clock,
   AlertCircle,
   Inbox,
   Send,
@@ -238,14 +237,7 @@ export const VendorAdminSupport: React.FC = () => {
   };
 
   // Handle Mark as Resolved by Vendor
-  const handleToggleResolve = async () => {
-    if (!selectedTicket) return;
-    const nextStatus: TicketStatus = selectedTicket.status === 'Resolved' ? 'Open' : 'Resolved';
-    const updated = await vendorAdminSupportService.updateTicketStatus(selectedTicket.id, nextStatus);
-    if (updated) {
-      setSelectedTicket(updated);
-    }
-  };
+  // toggle handler removed
 
   const getPriorityBadge = (priority: TicketPriority) => {
     switch (priority) {

@@ -17,7 +17,8 @@ import {
   X,
   GraduationCap,
   MessageSquarePlus,
-  FlaskConical
+  FlaskConical,
+  Layers
 } from 'lucide-react';
 import type { PanelType, AdminTab, VendorTab, ExpertTab } from '../types';
 
@@ -56,6 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'usermanagement', label: 'User Management', icon: <Users className="w-5 h-5 shrink-0" /> },
     { id: 'experts', label: 'Agri Experts', icon: <GraduationCap className="w-5 h-5 shrink-0" /> },
     { id: 'product', label: 'Product', icon: <Package className="w-5 h-5 shrink-0" /> },
+    { id: 'categories', label: 'Categories', icon: <Layers className="w-5 h-5 shrink-0" /> },
     { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-5 h-5 shrink-0" /> },
     { id: 'partners', label: 'Partners', icon: <Store className="w-5 h-5 shrink-0" /> },
     { id: 'content', label: 'Content Management', icon: <FileText className="w-5 h-5 shrink-0" /> },

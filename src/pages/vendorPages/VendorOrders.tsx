@@ -6,7 +6,9 @@ import {
 import { useAppSelector } from '../../redux';
 import { 
   useGetOrdersQuery, 
-  useUpdateOrderStatusMutation 
+  useUpdateOrderStatusMutation,
+  useDeleteOrderMutation,
+  useRestoreOrderMutation,
 } from '../../redux/feature/orders/ordersApi';
 import { Loader2 } from 'lucide-react';
 
@@ -37,6 +39,8 @@ export interface VendorOrder {
   confirmationRecipient?: string;
   courierName?: string;
   trackingNumber?: string;
+  isDeleted?: boolean;
+  deletedAt?: string | null;
 }
 
 function mapBackendStatusToVendorStatus(status: string): OrderStatus {
@@ -52,19 +56,23 @@ export const VendorOrders = () => {
   // Navigation views: 'list' | 'detail'
   const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'All' | OrderStatus>('All');
+  const [activeTab, setActiveTab] = useState<'All' | OrderStatus | 'Archived'>('All');
 
   // Current logged in vendor profile
   const { user } = useAppSelector((state) => state.auth);
   const vendorId = user?.vendorProfile?.id;
 
-  // Fetch real orders from backend
+  // Fetch real orders from backend (including soft-deleted for full control)
   const { data: ordersResponse, isLoading } = useGetOrdersQuery(
-    vendorId ? { vendorId, limit: 100 } : { limit: 100 },
+    vendorId
+      ? { vendorId, limit: 200, includeDeleted: 'true' }
+      : { limit: 200, includeDeleted: 'true' },
     { refetchOnMountOrArgChange: true }
   );
 
   const [updateOrderStatusMutation] = useUpdateOrderStatusMutation();
+  const [deleteOrderMutation] = useDeleteOrderMutation();
+  const [restoreOrderMutation] = useRestoreOrderMutation();
 
   const rawOrders = ordersResponse?.data?.orders || [];
 
@@ -85,7 +93,7 @@ export const VendorOrders = () => {
         id: o.id,
         orderNumber: o.orderNumber,
         status: mapBackendStatusToVendorStatus(o.status),
-        hasActionNeeded: o.status === 'pending' || o.status === 'confirmed',
+        hasActionNeeded: !o.isDeleted && (o.status === 'pending' || o.status === 'confirmed'),
         totalAmount: `৳${(o.total || calculatedTotal).toFixed(2)}`,
         customerName: o.customerName || 'Agri Customer',
         customerAddress: `${o.deliveryAddress || ''}${o.city ? ', ' + o.city : ''}${o.district ? ', ' + o.district : ''}`,
@@ -104,6 +112,8 @@ export const VendorOrders = () => {
         confirmationRecipient: o.customerName,
         courierName: o.courierName || undefined,
         trackingNumber: o.trackingNumber || undefined,
+        isDeleted: Boolean(o.isDeleted),
+        deletedAt: o.deletedAt || null,
       };
     });
   }, [rawOrders, vendorId]);
@@ -150,12 +160,39 @@ export const VendorOrders = () => {
     }
   };
 
+  // Archive Order (Always Soft Delete for vendor to preserve data & metrics)
+  const handleDeleteOrder = async (orderId: string, _mode: 'soft' | 'hard' = 'soft') => {
+    try {
+      await deleteOrderMutation({ id: orderId, mode: 'soft' }).unwrap();
+      if (currentView === 'detail' && selectedOrderId === orderId) {
+        setCurrentView('list');
+      }
+    } catch (err) {
+      console.error('Failed to archive order:', err);
+      throw err;
+    }
+  };
+
+  // Restore Order
+  const handleRestoreOrder = async (orderId: string) => {
+    try {
+      await restoreOrderMutation(orderId).unwrap();
+    } catch (err) {
+      console.error('Failed to restore order:', err);
+      throw err;
+    }
+  };
+
+  // Active (non-deleted) orders for primary metric cards
+  const activeOrders = useMemo(() => orders.filter((o) => !o.isDeleted), [orders]);
+
   // Counts for Metric Cards & Filter Tabs
-  const countNew = orders.filter((o) => o.status === 'New').length;
-  const countProcessing = orders.filter((o) => o.status === 'Processing').length;
-  const countInTransit = orders.filter((o) => o.status === 'Delivery Sent').length;
-  const countCompleted = orders.filter((o) => o.status === 'Completed').length;
-  const countCancelled = orders.filter((o) => o.status === 'Cancelled').length;
+  const countNew = activeOrders.filter((o) => o.status === 'New').length;
+  const countProcessing = activeOrders.filter((o) => o.status === 'Processing').length;
+  const countInTransit = activeOrders.filter((o) => o.status === 'Delivery Sent').length;
+  const countCompleted = activeOrders.filter((o) => o.status === 'Completed').length;
+  const countCancelled = activeOrders.filter((o) => o.status === 'Cancelled').length;
+  const countArchived = orders.filter((o) => o.isDeleted).length;
 
   const selectedOrder = orders.find((o) => o.id === selectedOrderId) || orders[0];
 
@@ -178,6 +215,8 @@ export const VendorOrders = () => {
         onMarkDeliverySent={handleMarkDeliverySent}
         onMarkCompleted={handleMarkCompleted}
         onChangeStatus={handleChangeStatus}
+        onDeleteOrder={handleDeleteOrder}
+        onRestoreOrder={handleRestoreOrder}
       />
     );
   }
@@ -193,6 +232,7 @@ export const VendorOrders = () => {
       countInTransit={countInTransit}
       countCompleted={countCompleted}
       countCancelled={countCancelled}
+      countArchived={countArchived}
       onSelectOrder={(id) => {
         setSelectedOrderId(id);
         setCurrentView('detail');
@@ -200,6 +240,8 @@ export const VendorOrders = () => {
       onAcceptOrder={handleAcceptOrder}
       onMarkDeliverySent={handleMarkDeliverySent}
       onMarkCompleted={handleMarkCompleted}
+      onDeleteOrder={handleDeleteOrder}
+      onRestoreOrder={handleRestoreOrder}
     />
   );
 };

@@ -41,6 +41,8 @@ export interface OrderRecord {
   estimatedDelivery?: string | null;
   trackingMilestones?: any[];
   items: OrderItemDetail[];
+  isDeleted?: boolean;
+  deletedAt?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
@@ -73,6 +75,8 @@ export interface QueryOrderParams {
   email?: string;
   phone?: string;
   vendorId?: string;
+  isDeleted?: string;
+  includeDeleted?: string;
 }
 
 export interface UpdateOrderStatusPayload {
@@ -83,3 +87,9 @@ export interface UpdateOrderStatusPayload {
   trackingNumber?: string;
   estimatedDelivery?: string;
 }
+
+export interface DeleteOrderPayload {
+  id: string;
+  mode?: 'soft' | 'hard';
+}
+

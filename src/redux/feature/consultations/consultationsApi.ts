@@ -1,4 +1,4 @@
-﻿import { baseApi } from '../../baseApi/baseApi';
+import { baseApi } from '../../baseApi/baseApi';
 import type { 
   ConsultationTicket, 
   ConsultationStatus,
@@ -64,14 +64,29 @@ export const consultationsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Consultation'],
     }),
+
+    getConsultationStats: builder.query<{
+      totalTickets: number;
+      waitingTickets: number;
+      openTickets: number;
+      resolvedTickets: number;
+    }, void>({
+      query: () => '/consultations/stats',
+      providesTags: ['Consultation'],
+      transformResponse: (response: any) => {
+        return response?.data || response;
+      },
+    }),
   }),
 });
 
 export const {
   useGetConsultationsQuery,
   useGetConsultationByIdQuery,
+  useGetConsultationStatsQuery,
   useSendConsultationMessageMutation,
   useUpdateConsultationStatusMutation,
   useMarkConsultationSeenMutation,
   useDeleteConsultationMutation,
 } = consultationsApi;
+

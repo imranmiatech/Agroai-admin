@@ -1,7 +1,89 @@
 import React, { useState } from 'react';
+import { useGetRevenueAndGrowthQuery } from '../../../redux';
+
+function createSpline(points: { x: number; y: number }[]): string {
+  if (!points || points.length === 0) return 'M 0,60 L 100,60';
+  if (points.length === 1) return `M 0,${points[0].y.toFixed(1)} L 100,${points[0].y.toFixed(1)}`;
+  
+  let d = `M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const curr = points[i];
+    const next = points[i + 1];
+    const cp1x = curr.x + (next.x - curr.x) / 3;
+    const cp1y = curr.y;
+    const cp2x = curr.x + (2 * (next.x - curr.x)) / 3;
+    const cp2y = next.y;
+    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${next.x.toFixed(1)},${next.y.toFixed(1)}`;
+  }
+  return d;
+}
 
 export const RevenueAndGrowthSection: React.FC = () => {
   const [userGrowthTimeframe, setUserGrowthTimeframe] = useState<'7D' | '30D' | '6M' | '12M'>('30D');
+
+  const { data } = useGetRevenueAndGrowthQuery(userGrowthTimeframe, {
+    pollingInterval: 15000,
+  });
+
+  const revenue = data?.revenue;
+  const userGrowth = data?.userGrowth;
+
+  const trendData = revenue?.trend || [];
+  const months = trendData.length > 0 
+    ? trendData.map((t) => t.month) 
+    : ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+
+  // 1. Dynamic Revenue Spline & Y-Axis
+  const maxRevenueAmount = Math.max(...trendData.map((t) => t.amount), 100);
+  const revenuePoints = trendData.map((t, idx) => {
+    const x = trendData.length > 1 ? (idx / (trendData.length - 1)) * 100 : 50;
+    // Map amount: 0 -> y=78, max -> y=20
+    const y = 78 - (t.amount / (maxRevenueAmount || 1)) * 58;
+    return { x, y };
+  });
+
+  const revenueSpline = revenuePoints.length > 0
+    ? createSpline(revenuePoints)
+    : 'M0,78 C33,75 66,50 100,20';
+
+  const formatRevenueY = (val: number) => {
+    if (val >= 1000000) return `€${(val / 1000000).toFixed(1)}M`;
+    if (val >= 1000) return `€${(val / 1000).toFixed(1)}k`;
+    return `€${Math.round(val)}`;
+  };
+
+  const revenueYAxis = [
+    formatRevenueY(maxRevenueAmount),
+    formatRevenueY(maxRevenueAmount * 0.75),
+    formatRevenueY(maxRevenueAmount * 0.5),
+    formatRevenueY(maxRevenueAmount * 0.25),
+    '€0',
+  ];
+
+  // 2. Dynamic User Growth Spline & Y-Axis
+  const timelineData = userGrowth?.timeline || [];
+  const maxUserCount = Math.max(...timelineData.map((p) => p.count), 4);
+  // Scale ceiling to a clean multiple of 4
+  const userCeiling = Math.ceil(maxUserCount / 4) * 4;
+
+  const userPoints = timelineData.map((p, idx) => {
+    const x = timelineData.length > 1 ? (idx / (timelineData.length - 1)) * 100 : 50;
+    // Map count: 0 -> y=76, userCeiling -> y=24
+    const y = 76 - (p.count / (userCeiling || 1)) * 52;
+    return { x, y };
+  });
+
+  const userGrowthSpline = userPoints.length > 0
+    ? createSpline(userPoints)
+    : 'M0,76 C33,70 66,45 100,24';
+
+  const userYAxis = [
+    userCeiling,
+    Math.round(userCeiling * 0.75),
+    Math.round(userCeiling * 0.5),
+    Math.round(userCeiling * 0.25),
+    0,
+  ];
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -15,11 +97,9 @@ export const RevenueAndGrowthSection: React.FC = () => {
           {/* Area Chart with Labels */}
           <div className="relative w-full h-44 my-2">
             <div className="absolute left-0 top-0 bottom-6 w-8 flex flex-col justify-between text-[11px] text-slate-400">
-              <span>€22k</span>
-              <span>€17k</span>
-              <span>€11k</span>
-              <span>€6k</span>
-              <span>€0k</span>
+              {revenueYAxis.map((label, idx) => (
+                <span key={idx}>{label}</span>
+              ))}
             </div>
 
             <div className="ml-10 h-36 relative">
@@ -39,12 +119,12 @@ export const RevenueAndGrowthSection: React.FC = () => {
 
                 {/* Gradient Fill */}
                 <path 
-                  d="M0,65 Q16,55 33,52 T66,35 T100,20 L100,100 L0,100 Z" 
+                  d={`${revenueSpline} L 100,100 L 0,100 Z`} 
                   fill="url(#revenue-area)" 
                 />
                 {/* Spline Line */}
                 <path 
-                  d="M0,65 Q16,55 33,52 T66,35 T100,20" 
+                  d={revenueSpline} 
                   fill="none" 
                   stroke="#0E4F5A" 
                   strokeWidth="2" 
@@ -54,33 +134,16 @@ export const RevenueAndGrowthSection: React.FC = () => {
 
               {/* X-axis months */}
               <div className="flex justify-between text-[11px] text-slate-400 pt-2">
-                <span>Jan</span>
-                <span>Feb</span>
-                <span>Mar</span>
-                <span>Apr</span>
-                <span>May</span>
-                <span>Jun</span>
-                <span>Jul</span>
+                {months.map((m, idx) => (
+                  <span key={idx}>{m}</span>
+                ))}
               </div>
             </div>
           </div>
         </div>
 
         {/* Bottom KPI Summaries */}
-        <div className="grid grid-cols-3 pt-5 border-t border-slate-100 text-center">
-          <div>
-            <div className="text-base font-bold text-slate-900">€21.2k</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">MRR</div>
-          </div>
-          <div>
-            <div className="text-base font-bold text-slate-900">€254k</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">ARR Run Rate</div>
-          </div>
-          <div>
-            <div className="text-base font-bold text-slate-900">€86.8</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Avg Plan</div>
-          </div>
-        </div>
+       
       </div>
 
       {/* User Growth Line Chart */}
@@ -113,11 +176,9 @@ export const RevenueAndGrowthSection: React.FC = () => {
           {/* Line Chart */}
           <div className="relative w-full h-44 my-2">
             <div className="absolute left-0 top-0 bottom-6 w-8 flex flex-col justify-between text-[11px] text-slate-400">
-              <span>1600</span>
-              <span>1200</span>
-              <span>800</span>
-              <span>400</span>
-              <span>0</span>
+              {userYAxis.map((val, idx) => (
+                <span key={idx}>{val}</span>
+              ))}
             </div>
 
             <div className="ml-10 h-36 relative">
@@ -130,7 +191,7 @@ export const RevenueAndGrowthSection: React.FC = () => {
 
                 {/* Growth Line in Orange */}
                 <path 
-                  d="M0,58 Q25,56 50,53 T100,48" 
+                  d={userGrowthSpline} 
                   fill="none" 
                   stroke="#F97316" 
                   strokeWidth="2.2" 
@@ -140,15 +201,9 @@ export const RevenueAndGrowthSection: React.FC = () => {
 
               {/* X-axis dates */}
               <div className="flex justify-between text-[10px] text-slate-400 pt-2">
-                <span>Jun 22</span>
-                <span>Jun 26</span>
-                <span>Jun 30</span>
-                <span>Jul 4</span>
-                <span>Jul 8</span>
-                <span>Jul 12</span>
-                <span>Jul 16</span>
-                <span>Jul 20</span>
-                <span>Jul 22</span>
+                {timelineData.map((item, idx) => (
+                  <span key={idx}>{item.label}</span>
+                ))}
               </div>
             </div>
           </div>
@@ -157,3 +212,4 @@ export const RevenueAndGrowthSection: React.FC = () => {
     </section>
   );
 };
+

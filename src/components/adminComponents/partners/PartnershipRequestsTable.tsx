@@ -1,10 +1,10 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Search, ChevronDown, Check, Eye, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import type { PartnershipRequest, CategoryItem } from '../../../redux';
+import type { PartnershipRequest, PartnerDivisionItem } from '../../../redux';
 import { useGetPartnershipRequestsQuery } from '../../../redux';
 
 interface PartnershipRequestsTableProps {
-  categories: CategoryItem[];
+  categories: PartnerDivisionItem[];
   onSelectRequest: (req: PartnershipRequest) => void;
 }
 

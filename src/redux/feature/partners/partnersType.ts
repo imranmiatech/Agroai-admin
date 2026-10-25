@@ -1,12 +1,14 @@
-﻿export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 
-export interface CategoryItem {
+export interface PartnerDivisionItem {
   name: string;
   count: number;
   color: string;
   percentage?: number;
   percentWidth?: number;
 }
+
+export type PartnerCategoryItem = PartnerDivisionItem;
 
 export interface MetricTrend {
   change: string;
@@ -47,7 +49,7 @@ export interface PartnerMetricsResponse {
 export interface PartnerDivisionsData {
   title: string;
   totalPartners: number;
-  divisions: CategoryItem[];
+  divisions: PartnerDivisionItem[];
   countsByDivision: Record<string, number>;
 }
 

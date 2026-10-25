@@ -290,8 +290,8 @@ export const OrdersModals: React.FC<OrdersModalsProps> = ({
               Delete Order?
             </h3>
 
-            <p className="text-sm text-slate-500 font-normal leading-relaxed mb-6 px-2">
-              Are you sure you want to delete order <span className="font-semibold text-slate-700">#{orderToDelete.orderNumber}</span> for {orderToDelete.customerName}? This action cannot be undone.
+            <p className="text-sm text-slate-600 font-medium mb-6 px-2">
+              Order #{orderToDelete.orderNumber}
             </p>
 
             <div className="grid grid-cols-2 gap-3 w-full">

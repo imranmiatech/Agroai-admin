@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
-import { 
-  ProductMetricsGrid, 
-  ProductFilters, 
-  ProductTable, 
-  ProductModals 
+import {
+  ProductMetricsGrid,
+  ProductFilters,
+  ProductTable,
+  ProductModals
 } from '../../components/adminComponents/product';
 import {
   useGetProductsQuery,
   useUpdateProductStatusMutation,
   useDeleteProductMutation,
   useProductsPrefetch,
+  useGetCategoriesQuery,
   type ProductItem as BackendProductItem,
 } from '../../redux';
 
@@ -86,6 +87,7 @@ export const AdminProduct: React.FC = () => {
 
   // Background prefetching hook for zero-latency pagination
   const prefetchProducts = useProductsPrefetch('getProducts');
+  const { data: categoriesResp } = useGetCategoriesQuery();
 
   // Reset page to 1 when filters change
   useEffect(() => {
@@ -175,21 +177,16 @@ export const AdminProduct: React.FC = () => {
   const outOfStockCount = allProducts.filter((p) => p.stock === 0 || p.status === 'OUT_OF_STOCK').length;
   const suspendedCount = allProducts.filter((p) => p.status === 'SUSPENDED').length;
 
-  // Distinct category options from Database + defaults
+  // Distinct category options from Database + dynamic backend categories
   const categoryOptions = useMemo(() => {
-    const defaultCategories = [
-      'All',
-      'Seeds & Seedlings',
-      'Vegetables',
-      'Plants & Seedlings',
-      'Fertilizers',
-      'Farm Tools',
-      'Agro Chemicals',
-    ];
+    const fromApi = Array.isArray(categoriesResp?.data)
+      ? categoriesResp.data
+      : (categoriesResp?.data as { categories?: { name: string }[] })?.categories || [];
+    const apiNames = fromApi.map((c) => c.name).filter(Boolean);
     const fromDb = allProducts.map((p) => p.category).filter(Boolean);
-    const combined = Array.from(new Set([...defaultCategories, ...fromDb]));
-    return combined.slice(0, 8);
-  }, [allProducts]);
+    const combined = Array.from(new Set(['All', ...apiNames, ...fromDb]));
+    return combined;
+  }, [categoriesResp, allProducts]);
 
   // Actions
   const handleToggleSuspend = async (product: ProductItem) => {
@@ -236,11 +233,10 @@ export const AdminProduct: React.FC = () => {
     <div className="w-full max-w-full flex flex-col gap-6 font-['Inter'] pb-16 animate-in fade-in duration-200">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className={`fixed top-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-200 border ${
-          toastMessage.type === 'success'
+        <div className={`fixed top-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-200 border ${toastMessage.type === 'success'
             ? 'bg-[#062E35] text-white border-teal-500/30'
             : 'bg-rose-900 text-white border-rose-500/30'
-        }`}>
+          }`}>
           {toastMessage.type === 'success' ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           ) : (

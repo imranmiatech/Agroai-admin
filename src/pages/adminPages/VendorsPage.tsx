@@ -10,10 +10,10 @@ import {
   useUpdatePartnerStatusMutation,
   type PartnershipRequest,
   type RequestStatus,
-  type CategoryItem,
+  type PartnerDivisionItem,
 } from '../../redux';
 
-export type { PartnershipRequest, RequestStatus, CategoryItem };
+export type { PartnershipRequest, RequestStatus, PartnerDivisionItem };
 
 export const VendorsPage = () => {
   // Navigation tabs: Only 'overview' and 'requests'
@@ -24,7 +24,7 @@ export const VendorsPage = () => {
 
   // Live dynamic divisions breakdown from database
   const { data: divisionsRes } = useGetPartnerDivisionsQuery();
-  const categories: CategoryItem[] = divisionsRes?.data?.divisions || [
+  const categories: PartnerDivisionItem[] = divisionsRes?.data?.divisions || [
     { name: 'Dhaka', count: 0, color: '#059669' },
     { name: 'Chattogram', count: 0, color: '#0EA5E9' },
     { name: 'Rajshahi', count: 0, color: '#F59E0B' },

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  VendorWelcomeBanner, 
-  VendorMetricCards, 
-  OfferPerformanceChart, 
-  VendorRecentActivity, 
-  VendorOverviewModals 
+import {
+  VendorWelcomeBanner,
+  VendorMetricCards,
+  VendorRevenueChart,
+  VendorRecentActivity,
+  VendorOverviewModals
 } from '../../components/vendorComponents/overview';
+import { useGetVendorOverviewQuery } from '../../redux/feature/overview/overviewApi';
 
 interface VendorOverviewProps {
   onNavigateToProduct?: () => void;
@@ -18,6 +19,11 @@ export const VendorOverview: React.FC<VendorOverviewProps> = ({
   onNavigateToOrders: _onNavigateToOrders
 }) => {
   const navigate = useNavigate();
+
+  // 100% Dynamic Vendor Overview Data Hook
+  const { data: overviewData, isLoading } = useGetVendorOverviewQuery(undefined, {
+    pollingInterval: 60000,
+  });
 
   // Modals
   const [showCreateOfferModal, setShowCreateOfferModal] = useState(false);
@@ -47,7 +53,6 @@ export const VendorOverview: React.FC<VendorOverviewProps> = ({
     <div className="flex flex-col gap-6 w-full font-['Inter']">
       {/* 1. Welcome Header Banner */}
       <VendorWelcomeBanner
-        onOpenCreateOffer={() => setShowCreateOfferModal(true)}
         onOpenAddProduct={() => {
           if (onNavigateToProduct) {
             onNavigateToProduct();
@@ -57,14 +62,24 @@ export const VendorOverview: React.FC<VendorOverviewProps> = ({
         }}
       />
 
-      {/* 2. Top 3 Metric KPI Cards */}
-      <VendorMetricCards />
+      {/* 2. Top 3 Metric KPI Cards (100% Dynamic) */}
+      <VendorMetricCards
+        metrics={overviewData?.metrics}
+        isLoading={isLoading}
+      />
 
-      {/* 3. Offer Performance Line Chart */}
-      <OfferPerformanceChart />
+      {/* 3. Revenue Area Chart (100% Dynamic) */}
+      <VendorRevenueChart
+        data={overviewData?.revenueChart?.trend}
+        currencySymbol={overviewData?.revenueChart?.currencySymbol || 'BDT'}
+        isLoading={isLoading}
+      />
 
-      {/* 4. Bottom Grid: Recent Activity & Top Performing Offer */}
-      <VendorRecentActivity />
+      {/* 4. Recent Activity (100% Dynamic) */}
+      <VendorRecentActivity
+        activities={overviewData?.recentActivity}
+        isLoading={isLoading}
+      />
 
       {/* Modals */}
       <VendorOverviewModals

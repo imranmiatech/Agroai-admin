@@ -48,3 +48,10 @@ export * from './feature/soilTests/soilTestsType';
 
 export * from './feature/orders/ordersApi';
 export * from './feature/orders/ordersType';
+
+export * from './feature/category/categoryApi';
+export * from './feature/category/categoryType';
+
+export * from './feature/overview/overviewApi';
+export * from './feature/overview/overviewType';
+

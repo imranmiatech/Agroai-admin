@@ -1,6 +1,21 @@
 import React from 'react';
 import { Tag, Check, Clock, Trash2 } from 'lucide-react';
-import type { AdminOfferItem } from '../../../pages/adminPages/AdminOffers';
+export interface AdminOfferItem {
+  id: number;
+  code: string;
+  title?: string;
+  description?: string;
+  discount: string;
+  category?: string;
+  type?: string;
+  minSpend?: string;
+  expiry?: string;
+  expiryDate?: string;
+  usage?: string;
+  usageCount?: number;
+  maxUsage?: number;
+  status: 'Active' | 'Scheduled' | 'Expired' | string;
+}
 
 interface AdminOffersTableProps {
   offers: AdminOfferItem[];

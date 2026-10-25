@@ -4,6 +4,7 @@ import type {
   SingleOrderResponse,
   QueryOrderParams,
   UpdateOrderStatusPayload,
+  DeleteOrderPayload,
 } from './ordersType';
 
 export const ordersApi = baseApi.injectEndpoints({
@@ -20,6 +21,8 @@ export const ordersApi = baseApi.injectEndpoints({
           if (params.email?.trim()) queryParams.email = params.email.trim();
           if (params.phone?.trim()) queryParams.phone = params.phone.trim();
           if (params.vendorId?.trim()) queryParams.vendorId = params.vendorId.trim();
+          if (params.isDeleted) queryParams.isDeleted = params.isDeleted;
+          if (params.includeDeleted) queryParams.includeDeleted = params.includeDeleted;
         }
 
         return {
@@ -57,10 +60,31 @@ export const ordersApi = baseApi.injectEndpoints({
       ],
     }),
 
-    deleteOrder: builder.mutation<{ success: boolean; message: string }, string>({
+    deleteOrder: builder.mutation<
+      { success: boolean; message: string; mode?: 'soft' | 'hard' },
+      string | DeleteOrderPayload
+    >({
+      query: (arg) => {
+        const id = typeof arg === 'string' ? arg : arg.id;
+        const mode = typeof arg === 'object' && arg.mode ? arg.mode : 'soft';
+        return {
+          url: `/orders/${id}?mode=${mode}`,
+          method: 'DELETE',
+        };
+      },
+      invalidatesTags: (_result, _error, arg) => {
+        const id = typeof arg === 'string' ? arg : arg.id;
+        return [
+          { type: 'Order', id },
+          { type: 'Order', id: 'LIST' },
+        ];
+      },
+    }),
+
+    restoreOrder: builder.mutation<{ success: boolean; message: string }, string>({
       query: (id) => ({
-        url: `/orders/${id}`,
-        method: 'DELETE',
+        url: `/orders/${id}/restore`,
+        method: 'PATCH',
       }),
       invalidatesTags: (_result, _error, id) => [
         { type: 'Order', id },
@@ -75,5 +99,7 @@ export const {
   useGetOrderByIdQuery,
   useUpdateOrderStatusMutation,
   useDeleteOrderMutation,
+  useRestoreOrderMutation,
   usePrefetch: useOrdersPrefetch,
 } = ordersApi;
+

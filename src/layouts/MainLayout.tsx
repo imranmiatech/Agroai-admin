@@ -50,7 +50,7 @@ export const MainLayout = () => {
   const activeTabSlug = pathSegments[1] || 'overview';
 
   const activeAdminTab: AdminTab = (
-    ['overview', 'usermanagement', 'experts', 'product', 'orders', 'partners', 'content', 'contact', 'support', 'settings'].includes(activeTabSlug)
+    ['overview', 'usermanagement', 'experts', 'product', 'orders', 'partners', 'content', 'contact', 'support', 'settings', 'categories'].includes(activeTabSlug)
       ? activeTabSlug
       : 'overview'
   ) as AdminTab;

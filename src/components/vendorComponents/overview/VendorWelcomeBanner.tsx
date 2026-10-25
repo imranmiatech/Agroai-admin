@@ -1,12 +1,10 @@
 import React from 'react';
 
 interface VendorWelcomeBannerProps {
-  onOpenCreateOffer: () => void;
   onOpenAddProduct: () => void;
 }
 
 export const VendorWelcomeBanner: React.FC<VendorWelcomeBannerProps> = ({
-  onOpenCreateOffer,
   onOpenAddProduct
 }) => {
   return (
@@ -36,13 +34,7 @@ export const VendorWelcomeBanner: React.FC<VendorWelcomeBannerProps> = ({
 
       {/* Banner Right Actions */}
       <div className="relative z-10 flex flex-wrap items-center gap-2.5 sm:gap-3">
-        <button
-          type="button"
-          onClick={onOpenCreateOffer}
-          className="px-5 py-2.5 rounded-full bg-white text-[#0B5460] text-sm font-semibold hover:bg-slate-50 transition-all cursor-pointer shadow-sm active:scale-98"
-        >
-          + Create Offer
-        </button>
+       
         <button
           type="button"
           onClick={onOpenAddProduct}

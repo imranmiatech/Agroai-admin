@@ -236,11 +236,10 @@ export const VendorProduct: React.FC = () => {
     <div className="w-full max-w-full flex flex-col gap-6 font-['Inter'] pb-16 animate-in fade-in duration-200">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className={`fixed top-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-200 border ${
-          toastMessage.type === 'success'
+        <div className={`fixed top-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 animate-in slide-in-from-top-4 duration-200 border ${toastMessage.type === 'success'
             ? 'bg-[#062E35] text-white border-teal-500/30'
             : 'bg-rose-900 text-white border-rose-500/30'
-        }`}>
+          }`}>
           {toastMessage.type === 'success' ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           ) : (

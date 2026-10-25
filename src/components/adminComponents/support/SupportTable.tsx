@@ -42,13 +42,7 @@ export const SupportTable: React.FC<SupportTableProps> = ({
             <span>Open</span>
           </span>
         );
-      case 'In Review':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FEF3C7] text-[#D97706]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]" />
-            <span>In Review</span>
-          </span>
-        );
+      
       case 'Resolved':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E6F4F1] text-[#0E7A6B]">
