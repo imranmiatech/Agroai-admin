@@ -21,6 +21,9 @@ import {
   Layers
 } from 'lucide-react';
 import type { PanelType, AdminTab, VendorTab, ExpertTab } from '../types';
+import { useGetProfileQuery } from '../redux/feature/profile/profileApi';
+import { useAppDispatch, useAppSelector } from '../redux/store/hooks';
+import { setUser } from '../redux/feature/auth/authSlice';
 
 interface SidebarProps {
   currentPanel: PanelType;
@@ -50,6 +53,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile
 }) => {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
+
+  // Fetch real profile data from API
+  const dispatch = useAppDispatch();
+  const { data: profileResponse } = useGetProfileQuery();
+  const authUser = useAppSelector((state) => state.auth.user);
+  const profile = profileResponse?.data;
+
+  // Sync profile into auth state for app-wide consistency
+  React.useEffect(() => {
+    if (profileResponse?.data) {
+      const u = profileResponse.data;
+      const img = u.avatar || u.vendorProfile?.logo || null;
+      dispatch(
+        setUser({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: (u.role as any) || 'CUSTOMER',
+          status: (u.status as any) || 'ACTIVE',
+          isEmailVerified: u.isEmailVerified,
+          avatar: img,
+          vendorProfile: u.vendorProfile
+            ? {
+                id: u.vendorProfile.id,
+                businessName: u.vendorProfile.businessName,
+                slug: u.vendorProfile.slug,
+                logo: u.vendorProfile.logo,
+                status: (u.vendorProfile.status as any) || 'APPROVED',
+                category: u.vendorProfile.category || undefined,
+              }
+            : undefined,
+        })
+      );
+    }
+  }, [profileResponse, dispatch]);
+
+  const displayName = profile?.name || authUser?.name || 'User';
+  const displayEmail = profile?.email || authUser?.email || '';
+  const displayRole = profile?.role || authUser?.role || (currentPanel === 'admin' ? 'ADMIN' : currentPanel === 'vendor' ? 'VENDOR' : 'EXPERT');
+  const avatarUrl = profile?.avatar || profile?.vendorProfile?.logo || authUser?.avatar;
+
+  const [imgError, setImgError] = React.useState(false);
+  React.useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
+
+  const getInitials = (name: string) => {
+    const parts = (name || '').trim().split(' ').filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    if (parts.length === 1 && parts[0].length > 0) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return currentPanel === 'expert' ? 'EX' : currentPanel === 'vendor' ? 'VN' : 'AD';
+  };
+
+  const avatarInitials = getInitials(displayName);
 
   // Exact Admin items from Figma design (node 28406:44195)
   const adminMenuItems: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
@@ -218,16 +279,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Mobile Footer */}
             <div className="p-4 border-t border-white/10 flex flex-col gap-2">
-              <div className="flex items-center gap-3 px-2 py-2 rounded-xl">
-                <div className="w-9 h-9 rounded-full bg-[#0E4F5A] border border-white/20 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  {currentPanel === 'expert' ? 'E' : currentPanel === 'vendor' ? 'V' : 'A'}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-white text-sm font-semibold truncate leading-tight">
-                    {currentPanel === 'expert' ? 'Dr. Tariqul Islam' : 'Eva Turner'}
-                  </span>
-                  <span className="text-[#8AA3A8] text-xs font-normal">
-                    {currentPanel === 'admin' ? 'Admin Suite' : currentPanel === 'vendor' ? 'Vendor Hub' : 'Expert Portal'}
+              <div 
+                onClick={() => handleTabClick('settings')}
+                className="flex items-center gap-3 px-2 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+                title={`${displayName} - Go to Settings`}
+              >
+                {avatarUrl && !imgError ? (
+                  <img
+                    src={avatarUrl}
+                    alt={displayName}
+                    onError={() => setImgError(true)}
+                    className="w-9 h-9 rounded-full object-cover border border-white/20 shrink-0 bg-[#0E4F5A]"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#0E4F5A] border border-white/20 flex items-center justify-center text-white font-bold text-xs shrink-0 tracking-wide uppercase select-none">
+                    {avatarInitials}
+                  </div>
+                )}
+                <div className="flex flex-col min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-white text-sm font-semibold truncate leading-tight group-hover:text-emerald-300 transition-colors">
+                      {displayName}
+                    </span>
+                    {displayRole && (
+                      <span className="shrink-0 px-1.5 py-0.5 bg-[#0E4F5A] border border-white/15 text-[#CBFF54] text-[9px] font-bold rounded uppercase tracking-wider">
+                        {displayRole}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[#8AA3A8] text-xs font-normal truncate mt-0.5" title={displayEmail}>
+                    {displayEmail || (currentPanel === 'admin' ? 'Admin Suite' : currentPanel === 'vendor' ? 'Vendor Hub' : 'Expert Portal')}
                   </span>
                 </div>
               </div>
@@ -364,17 +445,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Footer Profile & Logout (Figma Design Layout) */}
         <div className="p-4 border-t border-white/10 flex flex-col gap-2 shrink-0">
           {/* User Card */}
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-2 py-2 rounded-xl`}>
-            <div className="w-9 h-9 rounded-full bg-[#0E4F5A] border border-white/20 flex items-center justify-center text-white font-bold text-sm shrink-0">
-              {currentPanel === 'expert' ? 'E' : currentPanel === 'vendor' ? 'V' : 'A'}
-            </div>
+          <div 
+            onClick={() => handleTabClick('settings')}
+            className={`flex items-center ${isCollapsed ? 'justify-center p-1.5' : 'gap-3 px-2 py-2 bg-white/5'} rounded-xl hover:bg-white/10 transition-colors cursor-pointer group`}
+            title={`${displayName} (${displayRole || displayEmail}) - Settings`}
+          >
+            {avatarUrl && !imgError ? (
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                onError={() => setImgError(true)}
+                className="w-9 h-9 rounded-full object-cover border border-white/20 shrink-0 bg-[#0E4F5A]"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-[#0E4F5A] border border-white/20 flex items-center justify-center text-white font-bold text-xs shrink-0 tracking-wide uppercase select-none">
+                {avatarInitials}
+              </div>
+            )}
             {!isCollapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-white text-sm font-semibold truncate leading-tight">
-                  {currentPanel === 'expert' ? 'Dr. Tariqul Islam' : 'Eva Turner'}
-                </span>
-                <span className="text-[#8AA3A8] text-xs font-normal">
-                  {currentPanel === 'admin' ? 'Admin Suite' : currentPanel === 'vendor' ? 'Vendor Hub' : 'Expert Portal'}
+              <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-white text-sm font-semibold truncate leading-tight group-hover:text-emerald-300 transition-colors">
+                    {displayName}
+                  </span>
+                  {displayRole && (
+                    <span className="shrink-0 px-1.5 py-0.5 bg-[#0E4F5A] border border-white/15 text-[#CBFF54] text-[9px] font-bold rounded uppercase tracking-wider">
+                      {displayRole}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[#8AA3A8] text-xs font-normal truncate mt-0.5" title={displayEmail}>
+                  {displayEmail || (currentPanel === 'admin' ? 'Admin Suite' : currentPanel === 'vendor' ? 'Vendor Hub' : 'Expert Portal')}
                 </span>
               </div>
             )}

@@ -6,12 +6,14 @@ import { Header } from '../Common/Header';
 import { LogOut, X, CheckCircle2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../redux/store/hooks';
 import { logout } from '../redux/feature/auth/authSlice';
+import { useLogoutUserMutation } from '../redux/feature/auth/authApi';
 
 export const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const [logoutUser, { isLoading: isLogoutApiLoading }] = useLogoutUserMutation();
 
   // Modals & Drawers
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -77,14 +79,20 @@ export const MainLayout = () => {
     }
   };
 
-  const handleConfirmLogout = () => {
+  const handleConfirmLogout = async () => {
     setIsLoggedOut(true);
-    setTimeout(() => {
-      dispatch(logout());
-      setShowLogoutModal(false);
-      setIsLoggedOut(false);
-      navigate('/login');
-    }, 1200);
+    try {
+      await logoutUser().unwrap();
+    } catch (err) {
+      console.warn('Admin logout notification:', err);
+    } finally {
+      setTimeout(() => {
+        dispatch(logout());
+        setShowLogoutModal(false);
+        setIsLoggedOut(false);
+        navigate('/login');
+      }, 1000);
+    }
   };
 
   return (
@@ -205,9 +213,13 @@ export const MainLayout = () => {
                   </button>
                   <button
                     onClick={handleConfirmLogout}
-                    className="px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
+                    disabled={isLogoutApiLoading}
+                    className="px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-2"
                   >
-                    Yes, Sign Out
+                    {isLogoutApiLoading && (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    )}
+                    <span>{isLogoutApiLoading ? 'Signing Out...' : 'Yes, Sign Out'}</span>
                   </button>
                 </div>
               </>

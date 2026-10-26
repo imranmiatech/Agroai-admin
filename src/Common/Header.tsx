@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Bell, Menu } from 'lucide-react';
 import type { PanelType, AdminTab, VendorTab, ExpertTab } from '../types';
 import { useAppSelector } from '../redux/store/hooks';
+import { useGetProfileQuery } from '../redux/feature/profile/profileApi';
 
 interface HeaderProps {
   currentPanel: PanelType;
@@ -16,7 +17,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNotifications,
   onOpenMobileMenu
 }) => {
-  const user = useAppSelector((state) => state.auth.user);
+  const { data: profileResponse } = useGetProfileQuery();
+  const authUser = useAppSelector((state) => state.auth.user);
+  const user = profileResponse?.data || authUser;
   return (
     <header className="h-16 sm:h-[72px] bg-white border-b border-slate-200/80 flex items-center justify-between px-3 sm:px-6 lg:px-8 sticky top-0 z-30 shrink-0">
       {/* Left: Mobile Hamburger & Search Bar */}
