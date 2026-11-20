@@ -11,7 +11,6 @@ import {
   LogOut, 
   ChevronLeft, 
   ChevronRight, 
-  ShieldCheck, 
   ShoppingBag, 
   Package, 
   X,
@@ -27,7 +26,6 @@ import { setUser } from '../redux/feature/auth/authSlice';
 
 interface SidebarProps {
   currentPanel: PanelType;
-  onPanelChange: (panel: PanelType) => void;
   activeAdminTab: AdminTab;
   onAdminTabChange: (tab: AdminTab) => void;
   activeVendorTab: VendorTab;
@@ -41,7 +39,6 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentPanel,
-  onPanelChange,
   activeAdminTab,
   onAdminTabChange,
   activeVendorTab,
@@ -163,10 +160,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onCloseMobile?.();
   };
 
-  const handlePanelSwitch = (panel: PanelType) => {
-    onPanelChange(panel);
-  };
-
   return (
     <>
       {/* ========================================================= */}
@@ -202,48 +195,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <X className="w-5 h-5" />
               </button>
-            </div>
-
-            {/* Role Switcher Pill */}
-            <div className="px-4 pt-4 pb-2">
-              <div className="flex bg-[#042025] p-1 rounded-xl border border-white/10 gap-1">
-                <button
-                  type="button"
-                  onClick={() => handlePanelSwitch('admin')}
-                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                    currentPanel === 'admin'
-                      ? 'bg-[#0E4F5A] text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Admin</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePanelSwitch('vendor')}
-                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                    currentPanel === 'vendor'
-                      ? 'bg-[#0E4F5A] text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <ShoppingBag className="w-3.5 h-3.5" />
-                  <span>Vendor</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePanelSwitch('expert')}
-                  className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                    currentPanel === 'expert'
-                      ? 'bg-[#0E4F5A] text-[#CBFF54] shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <GraduationCap className="w-3.5 h-3.5" />
-                  <span>Expert</span>
-                </button>
-              </div>
             </div>
 
             {/* Navigation Menu */}
@@ -363,50 +314,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
-
-        {/* Role / Switcher Toggle Pill */}
-        {!isCollapsed && (
-          <div className="px-5 pt-3 pb-2 shrink-0">
-            <div className="flex bg-[#042025] p-1 rounded-xl border border-white/10 gap-1">
-              <button
-                type="button"
-                onClick={() => onPanelChange('admin')}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                  currentPanel === 'admin'
-                    ? 'bg-[#0E4F5A] text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Admin</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onPanelChange('vendor')}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                  currentPanel === 'vendor'
-                    ? 'bg-[#0E4F5A] text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <ShoppingBag className="w-3.5 h-3.5" />
-                <span>Vendor</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onPanelChange('expert')}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                  currentPanel === 'expert'
-                    ? 'bg-[#0E4F5A] text-[#CBFF54] shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>Expert</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Navigation Menu */}
         <nav className="flex-1 px-3 py-3 flex flex-col gap-1 overflow-y-auto">

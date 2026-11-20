@@ -9,11 +9,15 @@ interface HeaderProps {
   activeAdminTab: AdminTab;
   activeVendorTab: VendorTab;
   activeExpertTab?: ExpertTab;
+  unreadNotificationsCount?: number;
+  isNotificationsOpen?: boolean;
   onOpenNotifications: () => void;
   onOpenMobileMenu?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  unreadNotificationsCount = 0,
+  isNotificationsOpen = false,
   onOpenNotifications,
   onOpenMobileMenu
 }) => {
@@ -47,17 +51,25 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Header Right Actions */}
       <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
-        {/* Notification Bell with Badge */}
+        {/* Notification Bell with Live Role-Based Badge */}
         <button
           type="button"
           onClick={onOpenNotifications}
-          className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer border border-slate-200/60"
+          aria-expanded={isNotificationsOpen}
+          aria-label="Open notifications"
+          className={`relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer border ${
+            isNotificationsOpen
+              ? 'bg-[#0E4F5A] text-white border-[#0E4F5A]'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-200/60'
+          }`}
           title="Notifications"
         >
           <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="absolute 1 top-0.5 -right-0.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
-            3
-          </span>
+          {unreadNotificationsCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
+              {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+            </span>
+          )}
         </button>
 
         {/* User Avatar */}

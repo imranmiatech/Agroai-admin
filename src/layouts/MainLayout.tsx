@@ -1,25 +1,76 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import type { PanelType, AdminTab, VendorTab, ExpertTab } from '../types';
 import { Sidebar } from '../Common/Sidebar';
 import { Header } from '../Common/Header';
+import { NotificationModal } from '../Common/NotificationModal';
 import { LogOut, X, CheckCircle2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../redux/store/hooks';
 import { logout } from '../redux/feature/auth/authSlice';
 import { useLogoutUserMutation } from '../redux/feature/auth/authApi';
+import { useGetNotificationsQuery } from '../redux/feature/notifications/notificationsApi';
+
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 export const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user, token, isAuthenticated } = useAppSelector((state) => state.auth);
   const [logoutUser, { isLoading: isLogoutApiLoading }] = useLogoutUserMutation();
 
   // Modals & Drawers
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggedOut, setIsLoggedOut] = useState(false);
-  const [, setShowNotifications] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Role-Based Notifications (auto-poll + real-time Socket.IO sync)
+  const {
+    data: notificationsRes,
+    isLoading: isNotificationsLoading,
+    isFetching: isNotificationsFetching,
+    isError: isNotificationsError,
+    refetch: refetchNotifications,
+  } = useGetNotificationsQuery(
+    { page: 1, limit: 50 },
+    {
+      skip: !isAuthenticated,
+      pollingInterval: 30000,
+    },
+  );
+
+  const notifications = notificationsRes?.data?.notifications ?? [];
+  const unreadNotificationsCount = notificationsRes?.data?.unreadCount ?? 0;
+
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+
+    const socket = io(SOCKET_URL, {
+      transports: ['websocket', 'polling'],
+      auth: { token },
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    });
+
+    const handleSync = () => {
+      void refetchNotifications();
+    };
+
+    socket.on('connect', () => {
+      socket.emit('join_notifications');
+    });
+    socket.on('new_notification', handleSync);
+    socket.on('notification_deleted', handleSync);
+    socket.on('notifications_cleared', handleSync);
+    socket.on('notifications_read', handleSync);
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [isAuthenticated, token, refetchNotifications]);
 
   // Auto-close mobile navigation on route change
   useEffect(() => {
@@ -69,16 +120,6 @@ export const MainLayout = () => {
       : 'overview'
   ) as ExpertTab;
 
-  const handlePanelChange = (panel: PanelType) => {
-    if (panel === 'admin') {
-      navigate('/admin/overview');
-    } else if (panel === 'vendor') {
-      navigate('/vendor/overview');
-    } else {
-      navigate('/expert/overview');
-    }
-  };
-
   const handleConfirmLogout = async () => {
     setIsLoggedOut(true);
     try {
@@ -101,7 +142,6 @@ export const MainLayout = () => {
       <div className="hidden lg:flex shrink-0">
         <Sidebar
           currentPanel={currentPanel}
-          onPanelChange={handlePanelChange}
           activeAdminTab={activeAdminTab}
           onAdminTabChange={(tab: AdminTab) => navigate(`/admin/${tab}`)}
           activeVendorTab={activeVendorTab}
@@ -122,9 +162,8 @@ export const MainLayout = () => {
 
       {/* Mobile Sidebar Drawer */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col ${
-          isMobileNavOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col ${isMobileNavOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -143,7 +182,6 @@ export const MainLayout = () => {
         <div className="flex-1 overflow-y-auto">
           <Sidebar
             currentPanel={currentPanel}
-            onPanelChange={handlePanelChange}
             activeAdminTab={activeAdminTab}
             onAdminTabChange={(tab: AdminTab) => {
               navigate(`/admin/${tab}`);
@@ -177,6 +215,8 @@ export const MainLayout = () => {
           activeAdminTab={activeAdminTab}
           activeVendorTab={activeVendorTab}
           activeExpertTab={activeExpertTab}
+          unreadNotificationsCount={unreadNotificationsCount}
+          isNotificationsOpen={showNotifications}
           onOpenNotifications={() => setShowNotifications((prev) => !prev)}
           onOpenMobileMenu={() => setIsMobileNavOpen(!isMobileNavOpen)}
         />
@@ -188,6 +228,21 @@ export const MainLayout = () => {
           </div>
         </main>
       </div>
+
+      {/* Clickable Role-Based Notification Modal */}
+      <NotificationModal
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        notifications={notifications}
+        unreadCount={unreadNotificationsCount}
+        role={user?.role}
+        isLoading={isNotificationsLoading}
+        isFetching={isNotificationsFetching}
+        isError={isNotificationsError}
+        onRetry={() => {
+          void refetchNotifications();
+        }}
+      />
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (

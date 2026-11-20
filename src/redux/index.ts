@@ -55,3 +55,8 @@ export * from './feature/category/categoryType';
 export * from './feature/overview/overviewApi';
 export * from './feature/overview/overviewType';
 
+// Notifications Feature
+export * from './feature/notifications/notificationsApi';
+export * from './feature/notifications/notificationsType';
+
+
